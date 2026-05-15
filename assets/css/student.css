@@ -1,0 +1,253 @@
+/* ============================================================
+   FK Student Club & Event Management System
+   Student Module Stylesheet (UMPSA Theme)
+   ============================================================ */
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+body {
+    background-color: #ffffff;
+    color: #39364f;
+    line-height: 1.6;
+}
+
+/* ── Top Navbar (Eventbrite Style, UMPSA Colors) ── */
+.top-navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #ffffff;
+    border-bottom: 1px solid #eeeff2;
+    height: 85px;
+    padding: 0 24px;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.nav-left {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.nav-logo {
+    height: 55px;
+    margin-right: 25px;
+    object-fit: contain;
+}
+
+.nav-brand {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1c3f95; /* UMPSA Navy */
+    line-height: 1.3;
+    border-left: 2px solid #eeeff2;
+    padding-left: 20px;
+}
+
+/* Search Bar */
+.nav-search-bar {
+    display: flex;
+    flex: 1;
+    max-width: 700px;
+    margin: 0 30px;
+    background-color: #f8f8fa;
+    border-radius: 40px;
+    height: 48px;
+    align-items: center;
+    padding: 0 8px 0 20px;
+    border: 1px solid transparent;
+    transition: background-color 0.2s, box-shadow 0.2s;
+}
+
+.nav-search-bar:focus-within {
+    background-color: #ffffff;
+    box-shadow: 0 0 0 2px #009e96; /* UMPSA Teal */
+}
+
+.search-input-group {
+    display: flex;
+    align-items: center;
+    flex: 1;
+}
+
+.search-icon {
+    font-size: 16px;
+    color: #6f7287;
+}
+
+.search-input-group input {
+    border: none;
+    background: transparent;
+    outline: none;
+    width: 100%;
+    font-size: 14px;
+    color: #39364f;
+    padding-left: 10px;
+}
+
+.search-input-group input::placeholder {
+    color: #6f7287;
+    font-weight: 400;
+}
+
+.search-divider {
+    width: 1px;
+    height: 24px;
+    background-color: #dbdae3;
+    margin: 0 15px;
+}
+
+.search-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background-color: #009e96; /* UMPSA Teal */
+    color: white;
+    border: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    font-size: 14px;
+    transition: background-color 0.2s;
+}
+
+.search-btn:hover {
+    background-color: #1c3f95; /* UMPSA Navy Blue */
+}
+
+/* Right Nav Links */
+.nav-right {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.nav-right .nav-link {
+    font-size: 16px;
+    font-weight: 600;
+    color: #39364f;
+    text-decoration: none;
+    margin-left: 30px;
+    transition: color 0.2s;
+}
+
+.nav-right .nav-link:hover {
+    color: #009e96; /* UMPSA Teal */
+}
+
+/* ── Content Area ── */
+.student-content {
+    padding: 40px 30px;
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.page-title {
+    font-size: 32px;
+    font-weight: 800;
+    color: #1c3f95; /* UMPSA Navy */
+    margin-bottom: 30px;
+}
+
+/* ── General Card / Box ── */
+.content-box {
+    background: #ffffff;
+    border: 1px solid #eeeff2;
+    border-radius: 8px;
+    padding: 40px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+}
+
+/* ── Forms and Grid ── */
+.info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    margin-top: 30px;
+    margin-bottom: 30px;
+}
+
+.info-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.info-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #6f7287;
+    margin-bottom: 8px;
+}
+
+.info-value {
+    font-size: 16px;
+    color: #39364f;
+    font-weight: 500;
+}
+
+.condition-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.btn-group {
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+    margin-top: 30px;
+    border-top: 1px solid #eeeff2;
+    padding-top: 30px;
+}
+
+.btn {
+    padding: 12px 24px;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.btn-cancel {
+    background-color: transparent;
+    border: 1px solid #dbdae3;
+    color: #39364f;
+}
+
+.btn-cancel:hover {
+    background-color: #f8f8fa;
+}
+
+.btn-confirm {
+    background-color: #009e96; /* UMPSA Teal */
+    border: 1px solid #009e96;
+    color: #ffffff;
+}
+
+.btn-confirm:hover {
+    background-color: #1c3f95; /* UMPSA Navy Blue */
+    border-color: #1c3f95;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.text-muted {
+    color: #6f7287;
+}
+
+.mt-20 {
+    margin-top: 20px;
+}
