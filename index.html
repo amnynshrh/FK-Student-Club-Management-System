@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login — FK Student Club & Event Management System</title>
+    <meta name="description" content="Login to the FK Student Club & Event Management System, UMPSA Faculty of Computing.">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <style>
+        .login-input-group { position: relative; }
+        .login-input-group .input-icon {
+            position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+            color: var(--text-muted); font-size: 1rem; pointer-events: none;
+        }
+        .login-input-group .form-control { padding-left: 42px; }
+        .password-toggle {
+            position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+            background: none; border: none; color: var(--text-muted);
+            cursor: pointer; font-size: 1rem; padding: 4px;
+        }
+        .password-toggle:hover { color: var(--text-primary); }
+        .error-box {
+            background: rgba(239,68,68,0.1);
+            border: 1px solid rgba(239,68,68,0.3);
+            border-radius: var(--radius-sm);
+            padding: 10px 14px;
+            color: var(--danger);
+            font-size: 0.85rem;
+            margin-bottom: 16px;
+            display: none;
+        }
+        .spinner {
+            width: 18px; height: 18px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            display: none;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .divider {
+            display: flex; align-items: center; gap: 12px;
+            color: var(--text-muted); font-size: 0.78rem;
+            margin: 20px 0;
+        }
+        .divider::before, .divider::after {
+            content:''; flex:1; height:1px;
+            background: var(--border);
+        }
+    </style>
+</head>
+<body>
+<div class="login-page">
+    <!-- Background orbs -->
+    <div class="login-bg-orb orb1"></div>
+    <div class="login-bg-orb orb2"></div>
+
+    <div class="login-card">
+        <!-- Logo -->
+        <div class="login-logo">
+            <div class="logo-icon">🎓</div>
+            <h1>FK Club System</h1>
+            <p>Faculty of Computing, UMPSA<br>Student Club & Event Management</p>
+        </div>
+
+        <!-- Error message -->
+        <div class="error-box" id="error-box">❌ <span id="error-msg"></span></div>
+
+        <!-- Login form -->
+        <form id="login-form" novalidate>
+            <div class="form-group">
+                <label class="form-label" for="matric_number">Matric Number</label>
+                <div class="login-input-group">
+                    <span class="input-icon">🪪</span>
+                    <input
+                        type="text"
+                        id="matric_number"
+                        name="matric_number"
+                        class="form-control"
+                        placeholder="e.g. CB24175 or ADMIN001"
+                        autocomplete="username"
+                        required
+                    >
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="password">Password</label>
+                <div class="login-input-group">
+                    <span class="input-icon">🔒</span>
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        class="form-control"
+                        placeholder="Enter your password"
+                        autocomplete="current-password"
+                        required
+                    >
+                    <button type="button" class="password-toggle" id="pw-toggle" title="Show/hide password">👁</button>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-lg login-btn" id="login-btn">
+                <span id="btn-text">Sign In</span>
+                <div class="spinner" id="btn-spinner"></div>
+            </button>
+        </form>
+
+        <div class="divider">FK Student Club & Event Management System</div>
+        <p class="text-center text-muted text-small">BCS2243 Web Engineering &bull; Semester 2 2025/2026</p>
+    </div>
+</div>
+
+<script>
+(async () => {
+    // If already logged in, redirect to correct dashboard
+    const res = await fetch('/WEB PROJECT/api/auth/session.php', { credentials: 'same-origin' });
+    const sess = await res.json();
+    if (sess.loggedIn) {
+        const map = { admin: 'admin', committee: 'committee', student: 'student' };
+        window.location.href = `/WEB PROJECT/${map[sess.role]}/home.html`;
+    }
+})();
+
+// Password toggle
+document.getElementById('pw-toggle').addEventListener('click', function () {
+    const pw = document.getElementById('password');
+    if (pw.type === 'password') { pw.type = 'text'; this.textContent = '🙈'; }
+    else                        { pw.type = 'password'; this.textContent = '👁'; }
+});
+
+// Login form submit
+document.getElementById('login-form').addEventListener('submit', async function (e) {
+    e.preventDefault();
+
+    const matric   = document.getElementById('matric_number').value.trim();
+    const password = document.getElementById('password').value;
+    const errorBox = document.getElementById('error-box');
+    const errorMsg = document.getElementById('error-msg');
+    const btnText  = document.getElementById('btn-text');
+    const spinner  = document.getElementById('btn-spinner');
+    const btn      = document.getElementById('login-btn');
+
+    // Hide previous error
+    errorBox.style.display = 'none';
+
+    if (!matric || !password) {
+        errorMsg.textContent = 'Please enter your matric number and password.';
+        errorBox.style.display = 'block';
+        return;
+    }
+
+    // Show loading
+    btn.disabled = true;
+    btnText.textContent = 'Signing in...';
+    spinner.style.display = 'block';
+
+    try {
+        const res = await fetch('/WEB PROJECT/api/auth/login.php', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ matric_number: matric, password }),
+        });
+        const data = await res.json();
+
+        if (!res.ok) throw new Error(data.error || 'Login failed.');
+
+        // Redirect based on role
+        window.location.href = '/WEB PROJECT/' + data.redirect.replace('../','');
+    } catch (err) {
+        errorMsg.textContent = err.message;
+        errorBox.style.display = 'block';
+        btn.disabled = false;
+        btnText.textContent = 'Sign In';
+        spinner.style.display = 'none';
+    }
+});
+</script>
+</body>
+</html>
