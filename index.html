@@ -54,7 +54,7 @@
                 <span id="error-msg"></span>
             </div>
 
-            <form id="login-form" novalidate>
+            <form id="login-form" method="post" action="api/auth/login.php">
                 <!-- Role selector -->
                 <div class="form-group">
                     <label class="form-label">Login As</label>
@@ -74,7 +74,7 @@
                     <label class="form-label" for="matric_number">Matric Number</label>
                     <div class="input-wrap">
                         <span class="input-icon">🪪</span>
-                        <input type="text" id="matric_number" name="matric_number" class="form-control"
+                        <input type="text" id="matric_number" name="username" class="form-control"
                             placeholder="e.g. CB24167 or ADMIN001" autocomplete="username" required>
                     </div>
                 </div>
@@ -122,64 +122,6 @@
             else { pw.type = 'password'; this.textContent = '👁'; }
         });
 
-        // Login form submit
-        document.getElementById('login-form').addEventListener('submit', async function (e) {
-            e.preventDefault();
-
-            const matric = document.getElementById('matric_number').value.trim();
-            const password = document.getElementById('password').value;
-            const role = document.getElementById('role-select').value;
-            const errorBox = document.getElementById('error-box');
-            const errorMsg = document.getElementById('error-msg');
-            const btnText = document.getElementById('btn-text');
-            const spinner = document.getElementById('btn-spinner');
-            const btn = document.getElementById('login-btn');
-
-            // Hide previous error
-            errorBox.style.display = 'none';
-
-            if (!role) {
-                errorMsg.textContent = 'Please select your role.';
-                errorBox.style.display = 'flex';
-                return;
-            }
-            if (!matric || !password) {
-                errorMsg.textContent = 'Please enter your matric number and password.';
-                errorBox.style.display = 'flex';
-                return;
-            }
-
-            // Show loading
-            btn.disabled = true;
-            btnText.textContent = 'Signing in...';
-            spinner.style.display = 'block';
-
-            try {
-                const res = await fetch('/WEB PROJECT/api/auth/login.php', {
-                    method: 'POST',
-                    credentials: 'same-origin',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ matric_number: matric, password }),
-                });
-                const data = await res.json();
-
-                if (!res.ok) throw new Error(data.error || 'Login failed.');
-
-                // Optional: validate role matches
-                if (data.role !== role) {
-                    throw new Error(`You selected "${role}" but your account is registered as "${data.role}".`);
-                }
-
-                // Redirect
-                window.location.href = '/WEB PROJECT/' + data.redirect.replace('../', '');
-            } catch (err) {
-                errorMsg.textContent = err.message;
-                errorBox.style.display = 'flex';
-                btn.disabled = false;
-                btnText.textContent = 'Sign In';
-                spinner.style.display = 'none';
-            }
-        });
     </script>
 </body>
 

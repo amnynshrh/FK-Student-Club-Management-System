@@ -1,10 +1,19 @@
+<?php
+// Start up your PHP Session
+session_start();
+// If the user is not logged in send him/her to the login form
+if (!isset($_SESSION["Login"]) || $_SESSION["Login"] != "YES") {
+header("Location: ../index.html");
+exit();
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home - Committee</title>
+    <title>Home - Admin</title>
     <link rel="stylesheet" href="../assets/css/student.css">
 </head>
 
@@ -20,18 +29,19 @@
         </div>
 
         <div class="nav-right">
-            <a href="home.html" class="nav-link">Home</a>
-            <a href="view_club.html" class="nav-link">View Club</a>
+            <a href="home.php" class="nav-link">Home</a>
+            <a href="manage_users.html" class="nav-link">Manage Users</a>
+            <a href="manage_committees.html" class="nav-link">Manage Committees</a>
+            <a href="manage_clubs.html" class="nav-link">Manage Clubs</a>
             <a href="manage_events.html" class="nav-link">Manage Events</a>
-            <a href="manage_attendance.html" class="nav-link">Manage Attendance</a>
-            <a href="attendance_record.html" class="nav-link">Attendance Records</a>
+            <a href="reports.html" class="nav-link">Report</a>
             <a href="profile.html" class="nav-link">Profile</a>
             <a href="../api/auth/logout.php" class="nav-link">Log Out</a>
         </div>
     </header>
 
     <main class="student-content">
-        <h1 class="page-title">Committee Dashboard</h1>
+        <h1 class="page-title">Admin Dashboard</h1>
     </main>
 
 </body>
