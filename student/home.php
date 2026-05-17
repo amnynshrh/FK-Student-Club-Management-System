@@ -3,8 +3,8 @@
 session_start();
 // If the user is not logged in send him/her to the login form
 if (!isset($_SESSION["Login"]) || $_SESSION["Login"] != "YES") {
-header("Location: ../index.html");
-exit();
+    header("Location: ../index.html");
+    exit();
 }
 ?>
 <!DOCTYPE html>
@@ -23,10 +23,24 @@ exit();
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* Small overrides to make Bootstrap and Theme play nicely */
-        body { background-color: #ffffff; }
-        .table > :not(caption) > * > * { border-bottom-color: #eeeff2; }
-        .btn-umpsa-teal { background-color: #009e96; color: white; transition: 0.2s; }
-        .btn-umpsa-teal:hover { background-color: #1c3f95; color: white; }
+        body {
+            background-color: #ffffff;
+        }
+
+        .table> :not(caption)>*>* {
+            border-bottom-color: #eeeff2;
+        }
+
+        .btn-umpsa-teal {
+            background-color: #009e96;
+            color: white;
+            transition: 0.2s;
+        }
+
+        .btn-umpsa-teal:hover {
+            background-color: #1c3f95;
+            color: white;
+        }
     </style>
 </head>
 
@@ -45,7 +59,7 @@ exit();
         <div class="nav-right">
             <a href="home.php" class="nav-link">Home</a>
             <a href="view_club.html" class="nav-link">Find Clubs</a>
-            <a href="event_registration.html" class="nav-link">Events</a>
+            <a href="event_registration.html" class="nav-link">Event Registration</a>
             <a href="attendance_record.html" class="nav-link">Attendance</a>
             <a href="profile.html" class="nav-link">Profile</a>
             <a href="../api/auth/logout.php" class="nav-link">Log Out</a>
