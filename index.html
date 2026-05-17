@@ -4,125 +4,149 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login — FK Student Club & Event Management System</title>
-    <meta name="description"
-        content="Login to the FK Student Club & Event Management System, UMPSA Faculty of Computing.">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
-        rel="stylesheet">
+    <title>System Login — FK Student Club & Event Management</title>
+
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
 </head>
 
-<body>
+<body class="min-h-screen bg-slate-100 d-flex align-items-center justify-content-center px-3 py-5">
 
-    <div class="bg-pattern"></div>
-    <div class="bg-orb orb1"></div>
-    <div class="bg-orb orb2"></div>
-    <div class="bg-orb orb3"></div>
+    <div class="card border-0 shadow-lg rounded-4 w-100" style="max-width: 420px; min-height: 600px;">
+        <div class="card-body px-4 px-md-5 py-5">
 
-    <div class="login-wrapper">
-        <!-- Left: Branding -->
-        <div class="login-left">
-            <div class="brand-logo">
-                <img src="assets/images/fk.png" alt="FK UMPSA Logo"
-                    onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                <span class="logo-fallback" style="display:none;">🎓</span>
-            </div>
-            <div class="brand-title">FK Student Club &<br>Event Management</div>
-            <div class="brand-divider"></div>
-            <div class="brand-subtitle">
-                Faculty of Computing<br>
-                Universiti Malaysia Pahang Al-Sultan Abdullah
-            </div>
-            <div class="brand-badges">
-                <span class="brand-badge">Admin</span>
-                <span class="brand-badge">Committee</span>
-                <span class="brand-badge">Student</span>
-            </div>
-        </div>
-
-        <!-- Right: Login Form -->
-        <div class="login-right">
-            <div class="form-header">
-                <h1>Welcome Back 👋</h1>
-                <p>Sign in with your matric number and password</p>
+            <!-- Logo -->
+            <div class="text-center mb-4">
+                <img src="assets/images/uploads/logo-fk.png" alt="FK UMPSA Logo" class="mx-auto" style="width: 120px;">
             </div>
 
-            <!-- Error message -->
-            <div class="error-box" id="error-box">
-                <span>⚠️</span>
-                <span id="error-msg"></span>
+            <!-- Title -->
+            <div class="text-center mb-4">
+                <h1 class="fw-bold text-[#0054a6] mb-2" style="font-size: 26px;">
+                    Login
+                </h1>
+                <p class="text-muted mb-0">
+                    FK Student Club &amp; Event Management
+                </p>
             </div>
 
+            <!-- Error Message -->
+            <div class="alert alert-danger d-none py-2 small" id="error-box">
+                <i class="bi bi-exclamation-circle me-1"></i>
+                <span id="error-msg">Invalid username or password.</span>
+            </div>
+
+            <!-- Login Form -->
             <form id="login-form" method="post" action="api/auth/login.php">
-                <!-- Role selector -->
-                <div class="form-group">
-                    <label class="form-label">Login As</label>
-                    <div class="input-wrap">
-                        <span class="input-icon">👤</span>
-                        <select name="role" id="role-select" class="form-control" required>
-                            <option value="" disabled selected>Select your role</option>
-                            <option value="admin">🔑 Administrator (FK Staff)</option>
-                            <option value="committee">📋 Club Committee Member</option>
-                            <option value="student">🎓 Registered Student</option>
-                        </select>
-                    </div>
+
+                <!-- Role -->
+                <div class="mb-4">
+                    <label for="role-select" class="form-label fw-semibold">
+                        Login As:
+                    </label>
+                    <select name="role" id="role-select" class="form-select py-3" required>
+                        <option value="" disabled selected>Select your role</option>
+                        <option value="admin">Administrator</option>
+                        <option value="committee">Club Committee Member</option>
+                        <option value="student">Registered Student</option>
+                    </select>
                 </div>
 
-                <!-- Matric number -->
-                <div class="form-group">
-                    <label class="form-label" for="matric_number">Matric Number</label>
-                    <div class="input-wrap">
-                        <span class="input-icon">🪪</span>
-                        <input type="text" id="matric_number" name="username" class="form-control"
-                            placeholder="e.g. CB24167 or ADMIN001" autocomplete="username" required>
-                    </div>
+                <!-- Username -->
+                <div class="mb-4">
+                    <label for="matric_number" class="form-label fw-semibold">
+                        Matric Number / Username
+                    </label>
+                    <input type="text" id="matric_number" name="username" class="form-control py-3"
+                        placeholder="e.g., CB24161" autocomplete="username" required>
                 </div>
 
                 <!-- Password -->
-                <div class="form-group">
-                    <label class="form-label" for="password">Password</label>
-                    <div class="input-wrap">
-                        <span class="input-icon">🔒</span>
-                        <input type="password" id="password" name="password" class="form-control"
-                            placeholder="Enter your password" autocomplete="current-password" required>
-                        <button type="button" class="pw-toggle" id="pw-toggle" title="Show/hide password">👁</button>
+                <div class="mb-4">
+                    <label for="password" class="form-label fw-semibold">
+                        Password
+                    </label>
+
+                    <div class="input-group">
+                        <input type="password" id="password" name="password" class="form-control py-3"
+                            placeholder="••••••••" autocomplete="current-password" required>
+
+                        <button type="button" class="btn btn-outline-secondary px-3" id="toggle-password">
+                            Show
+                        </button>
                     </div>
                 </div>
 
-                <button type="submit" class="btn-submit" id="login-btn">
-                    <span id="btn-text">Sign In</span>
-                    <div class="spinner" id="btn-spinner"></div>
+                <!-- Button -->
+                <button type="submit"
+                    class="btn w-100 text-white fw-bold py-3 rounded-3 bg-[#0054a6] hover:bg-[#004487]">
+                    Sign In
                 </button>
+
             </form>
 
-            <div class="form-footer">
-                <span>BCS2243 Web Engineering &bull; Semester 2 2025/2026</span>
-                FK Student Club &amp; Event Management System
+            <!-- Footer -->
+            <div class="text-center mt-4">
+                <p class="text-muted small mb-0">
+                    Faculty of Computing<br>
+                    Universiti Malaysia Pahang Al-Sultan Abdullah
+                </p>
             </div>
+
         </div>
     </div>
 
     <script>
+        // Check existing session
         (async () => {
-            // If already logged in, redirect
             try {
-                const res = await fetch('/WEB PROJECT/api/auth/session.php', { credentials: 'same-origin' });
+                const res = await fetch('/WEB PROJECT/api/auth/session.php', {
+                    credentials: 'same-origin'
+                });
+
                 const sess = await res.json();
+
                 if (sess.loggedIn) {
                     window.location.href = `/WEB PROJECT/${sess.role}/home.html`;
                 }
-            } catch (_) { }
+            } catch (error) {
+                console.log('Session check skipped.');
+            }
         })();
 
-        // Password toggle
-        document.getElementById('pw-toggle').addEventListener('click', function () {
-            const pw = document.getElementById('password');
-            if (pw.type === 'password') { pw.type = 'text'; this.textContent = '🙈'; }
-            else { pw.type = 'password'; this.textContent = '👁'; }
-        });
+        // Password show/hide
+        const togglePassword = document.getElementById('toggle-password');
+        const passwordInput = document.getElementById('password');
 
+        togglePassword.addEventListener('click', function () {
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                togglePassword.textContent = 'Hide';
+            } else {
+                passwordInput.type = 'password';
+                togglePassword.textContent = 'Show';
+            }
+        });
     </script>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
 </body>
 
 </html>

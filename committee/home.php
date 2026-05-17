@@ -3,8 +3,8 @@
 session_start();
 // If the user is not logged in send him/her to the login form
 if (!isset($_SESSION["Login"]) || $_SESSION["Login"] != "YES") {
-header("Location: ../index.html");
-exit();
+    header("Location: ../index.html");
+    exit();
 }
 ?>
 <!DOCTYPE html>
@@ -13,8 +13,45 @@ exit();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home - Committee</title>
-    <link rel="stylesheet" href="../assets/css/student.css">
+    <title>Edit Event - Committee</title>
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Custom Theme UMPSA -->
+    <link rel="stylesheet" href="../assets/css/committee.css">
+
+    <style>
+        body {
+            background-color: #ffffff;
+        }
+
+        .table> :not(caption)>*>* {
+            border-bottom-color: #eeeff2;
+        }
+
+        .btn-umpsa-teal {
+            background-color: #009e96;
+            color: white;
+            transition: 0.2s;
+        }
+
+        .btn-umpsa-teal:hover {
+            background-color: #1c3f95;
+            color: white;
+        }
+
+        .nav-right .nav-link.active-link {
+            color: #1c3f95;
+            font-weight: 700;
+        }
+    </style>
 </head>
 
 <body>
@@ -43,6 +80,8 @@ exit();
         <h1 class="page-title">Committee Dashboard</h1>
     </main>
 
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 
 </html>

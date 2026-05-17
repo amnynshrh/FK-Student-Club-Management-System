@@ -4,16 +4,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manage Events - Committee</title>
-    <link rel="stylesheet" href="../assets/css/student.css">
+    <title>Edit Event - Committee</title>
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Custom Theme UMPSA -->
+    <link rel="stylesheet" href="../assets/css/committee.css">
+
+    <style>
+        body {
+            background-color: #ffffff;
+        }
+
+        .table> :not(caption)>*>* {
+            border-bottom-color: #eeeff2;
+        }
+
+        .btn-umpsa-teal {
+            background-color: #009e96;
+            color: white;
+            transition: 0.2s;
+        }
+
+        .btn-umpsa-teal:hover {
+            background-color: #1c3f95;
+            color: white;
+        }
+
+        .nav-right .nav-link.active-link {
+            color: #1c3f95;
+            font-weight: 700;
+        }
+    </style>
 </head>
 
 <body>
 
+    <!-- Navbar -->
     <header class="top-navbar">
+
         <div class="nav-left">
-            <img src="../assets/images/uploads/logo-fk.png" alt="FK Logo" class="nav-logo"
-                onerror="this.src='../assets/images/logo-fk.png';">
+            <img src="../assets/images/uploads/logo-fk.png" alt="FK Logo" class="nav-logo">
+
             <div class="nav-brand">
                 FK Student Club &<br>Management System
             </div>
@@ -22,17 +61,322 @@
         <div class="nav-right">
             <a href="home.html" class="nav-link">Home</a>
             <a href="view_club.html" class="nav-link">View Club</a>
-            <a href="manage_events.html" class="nav-link">Manage Events</a>
-            <a href="manage_attendance.html" class="nav-link">Manage Attendance</a>
-            <a href="attendance_record.html" class="nav-link">Attendance Records</a>
-            <a href="profile.html" class="nav-link">Profile</a>
-            <a href="../api/auth/logout.php" class="nav-link">Log Out</a>
+
+            <a href="manage_events.html" class="nav-link" style="color:#1c3f95; font-weight:700;">
+                Manage Events
+            </a>
+
+            <a href="manage_attendance.html" class="nav-link">
+                Manage Attendance
+            </a>
+
+            <a href="attendance_record.html" class="nav-link">
+                Attendance Records
+            </a>
+
+            <a href="profile.html" class="nav-link">
+                Profile
+            </a>
+
+            <a href="../api/auth/logout.php" class="nav-link">
+                Log Out
+            </a>
         </div>
+
     </header>
 
+    <!-- Main Content -->
     <main class="student-content">
+
+        <!-- Title -->
         <h1 class="page-title">Manage Events</h1>
+
+        <!-- Summary Cards -->
+        <div class="summary-cards-custom">
+
+            <!-- Card 1 -->
+            <div class="summary-card">
+
+                <div class="summary-icon navy">
+                    <i class="bi bi-bar-chart-line"></i>
+                </div>
+
+                <div>
+                    <p class="summary-label">Total Events</p>
+                    <h3 class="summary-number">18</h3>
+                </div>
+
+            </div>
+
+            <!-- Card 2 -->
+            <div class="summary-card">
+
+                <div class="summary-icon teal">
+                    <i class="bi bi-alarm"></i>
+                </div>
+
+                <div>
+                    <p class="summary-label">Upcoming Events</p>
+                    <h3 class="summary-number">8</h3>
+                </div>
+
+            </div>
+
+            <!-- Card 3 -->
+            <div class="summary-card">
+
+                <div class="summary-icon navy">
+                    <i class="bi bi-calendar-check"></i>
+                </div>
+
+                <div>
+                    <p class="summary-label">Completed Events</p>
+                    <h3 class="summary-number">10</h3>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- Controls -->
+        <div class="controls-row-custom">
+
+            <!-- Search -->
+            <div class="search-box-custom">
+
+                <span class="search-icon-custom">
+                    <i class="bi bi-search"></i>
+                </span>
+
+                <input type="text" placeholder="Event Title">
+
+            </div>
+
+            <!-- Add Button -->
+            <a href="add_event.html" class="btn-add-event text-decoration-none">
+                <i class="bi bi-plus-circle me-2"></i>
+                Add New Event
+            </a>
+
+        </div>
+
+        <!-- Table Card -->
+        <div class="table-card-custom">
+
+            <!-- Filters -->
+            <div class="table-filter-row">
+
+                <select class="filter-select-custom">
+                    <option>Show All Status</option>
+                    <option>Upcoming</option>
+                    <option>Ongoing</option>
+                    <option>Completed</option>
+                    <option>Cancelled</option>
+                </select>
+
+                <select class="filter-select-custom">
+                    <option>List of month</option>
+                    <option>January</option>
+                    <option>February</option>
+                    <option>March</option>
+                    <option>April</option>
+                    <option>May</option>
+                    <option>June</option>
+                    <option>July</option>
+                    <option>August</option>
+                    <option>September</option>
+                    <option>October</option>
+                    <option>November</option>
+                    <option>December</option>
+                </select>
+
+            </div>
+
+            <!-- Table -->
+            <div class="table-responsive">
+
+                <table class="event-table-custom">
+
+                    <thead>
+                        <tr>
+                            <th>Event Title</th>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Venue</th>
+                            <th>Max Participants</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        <tr>
+                            <td>Workshop</td>
+                            <td>8 May 2026</td>
+                            <td>10:30 PM - 5:30 PM</td>
+                            <td>FK Room A</td>
+                            <td>40</td>
+
+                            <td>
+                                <span class="status-badge ongoing">
+                                    Ongoing
+                                </span>
+                            </td>
+                            <td>
+                                <div class="action-buttons">
+
+                                    <a href="view_event.html?id=1" class="action-btn view-btn text-decoration-none">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+
+                                    <a href="edit_event.html?id=1" class="action-btn edit-btn text-decoration-none">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </a>
+
+                                    <button class="action-btn delete-btn">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+
+                                </div>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>AI Talk</td>
+                            <td>8 June 2026</td>
+                            <td>10:30 PM - 5:30 PM</td>
+                            <td>FK Room B</td>
+                            <td>50</td>
+
+                            <td>
+                                <span class="status-badge upcoming">
+                                    Upcoming
+                                </span>
+                            </td>
+
+                            <td>
+                                <div class="action-buttons">
+
+                                    <a href="view_event.html?id=1" class="action-btn view-btn text-decoration-none">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+
+                                    <a href="edit_event.html?id=1" class="action-btn edit-btn text-decoration-none">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </a>
+
+                                    <button class="action-btn delete-btn">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+
+                                </div>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>Camp</td>
+                            <td>8 April 2026</td>
+                            <td>10:30 PM - 5:30 PM</td>
+                            <td>FK Room C</td>
+                            <td>60</td>
+
+                            <td>
+                                <span class="status-badge completed">
+                                    Completed
+                                </span>
+                            </td>
+
+                            <td>
+                                <div class="action-buttons">
+
+                                    <a href="view_event.html?id=1" class="action-btn view-btn text-decoration-none">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+
+                                    <a href="edit_event.html?id=1" class="action-btn edit-btn text-decoration-none">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </a>
+
+                                    <button class="action-btn delete-btn">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+
+                                </div>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>Briefing</td>
+                            <td>9 June 2026</td>
+                            <td>10:30 PM - 5:30 PM</td>
+                            <td>FK Room A</td>
+                            <td>40</td>
+
+                            <td>
+                                <span class="status-badge upcoming">
+                                    Upcoming
+                                </span>
+                            </td>
+
+                            <td>
+
+                                <div class="action-buttons">
+
+                                    <button class="action-btn view-btn">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+
+                                    <button class="action-btn edit-btn">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </button>
+
+                                    <button class="action-btn delete-btn">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+
+                                </div>
+
+                            </td>
+                        </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+            <!-- Pagination -->
+            <div class="pagination-custom">
+
+                <button class="page-btn-custom">
+                    &laquo;
+                </button>
+
+                <button class="page-btn-custom active">
+                    1
+                </button>
+
+                <button class="page-btn-custom">
+                    2
+                </button>
+
+                <button class="page-btn-custom">
+                    3
+                </button>
+
+                <button class="page-btn-custom">
+                    &raquo;
+                </button>
+
+            </div>
+
+        </div>
+
     </main>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 </body>
 
