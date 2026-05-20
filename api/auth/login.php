@@ -1,62 +1,89 @@
 <?php
 session_start();
 
-$servername = "localhost";
-$username = "root";
-$password = "";
-$dbname = "fk_club_management"; 
-
-$conn = new mysqli($servername, $username, $password, $dbname);
-
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
+if ($_SERVER["REQUEST_METHOD"] !== "POST") {
+    header("Location: ../../index.html");
+    exit();
 }
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $uname = $_POST['username'];
-    $pass  = $_POST['password'];
-    $role  = $_POST['role'];
-    
-    $stmt = $conn->prepare("SELECT user_id, name, password, role FROM User WHERE matric_number = ?");
-    $stmt->bind_param("s", $uname);
-    $stmt->execute();
-    $result = $stmt->get_result();
+require_once "../../config/db.php";
 
-    if ($result->num_rows === 1) {
-        $user = $result->fetch_assoc();
+$selected_role = $_POST['role'] ?? '';
+$input_user = trim($_POST['username'] ?? '');
+$input_pass = $_POST['password'] ?? '';
 
-        if (password_verify($pass, $user['password']) || $pass === $user['password']) {
-            
-            // If correct, we set the session to YES
+if ($selected_role === '' || $input_user === '' || $input_pass === '') {
+    header("Location: ../../index.html?error=missing");
+    exit();
+}
+
+$sql = "
+    SELECT
+        u.user_id,
+        u.username,
+        u.email,
+        u.password,
+        u.role,
+        s.name AS student_name,
+        s.matric_number,
+        s.profile_photo,
+        a.name AS admin_name
+    FROM `user` u
+    LEFT JOIN `student` s ON s.user_id = u.user_id
+    LEFT JOIN `admin` a ON a.user_id = u.user_id
+    WHERE u.username = ?
+    LIMIT 1
+";
+
+$stmt = mysqli_prepare($conn, $sql);
+mysqli_stmt_bind_param($stmt, "s", $input_user);
+mysqli_stmt_execute($stmt);
+$result = mysqli_stmt_get_result($stmt);
+
+if (mysqli_num_rows($result) === 1) {
+    $row = mysqli_fetch_assoc($result);
+
+    if (strcasecmp($selected_role, $row['role']) === 0) {
+        if ($input_pass === $row['password']) {
+            $role = strtolower($row['role']);
+            $displayName = $row['student_name'] ?: ($row['admin_name'] ?: $row['username']);
+
             $_SESSION["Login"] = "YES";
-            
-            $_SESSION['user_id'] = $user['user_id'];
-            $_SESSION['user_name'] = $user['name'];
-            $_SESSION['role'] = $user['role'];
+            $_SESSION['user_id'] = $row['user_id'];
+            $_SESSION['username'] = $row['username'];
+            $_SESSION['name'] = $displayName;
+            $_SESSION['user_name'] = $displayName;
+            $_SESSION['email'] = $row['email'];
+            $_SESSION['role'] = $role;
+            $_SESSION['matric'] = $row['matric_number'] ?? '';
+            $_SESSION['photo'] = $row['profile_photo'] ?? '';
 
-            $role_folder = strtolower($user['role']);
-            if ($role_folder == 'admin') {
+            $_SESSION['SESS_USER_ID'] = $row['user_id'];
+            $_SESSION['SESS_USERNAME'] = $row['username'];
+            $_SESSION['SESS_ROLE'] = $role;
+
+            if ($role === 'admin') {
                 header("Location: ../../admin/home.php");
-            } else if ($role_folder == 'committee') {
+            } else if ($role === 'student') {
+                header("Location: ../../student/home.php");
+            } else if ($role === 'committee') {
                 header("Location: ../../committee/home.php");
             } else {
-                header("Location: ../../student/home.php");
+                header("Location: ../../index.html");
             }
             exit();
-
-        } else {
-            // If not correct, we set the session to NO
-            $_SESSION["Login"] = "NO";
-            echo "<h1>You are NOT logged correctly in </h1>";
-            echo "<p><a href='../../index.html'>Link to login file</a></p>";
         }
-    } else {
-        // If not correct, we set the session to NO
+
         $_SESSION["Login"] = "NO";
-        echo "<h1>You are NOT logged correctly in </h1>";
-        echo "<p><a href='../../index.html'>Link to login file</a></p>";
+        header("Location: ../../index.html?error=invalid_password");
+        exit();
     }
-    $stmt->close();
+
+    $_SESSION["Login"] = "NO";
+    header("Location: ../../index.html?error=role_mismatch");
+    exit();
 }
-$conn->close();
-?>
+
+$_SESSION["Login"] = "NO";
+header("Location: ../../index.html?error=user_not_found");
+exit();

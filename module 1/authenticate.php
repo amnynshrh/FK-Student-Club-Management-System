@@ -2,7 +2,7 @@
 session_start();
 
 // 1. Database connection
-$conn = new mysqli("localhost", "root", "", "fk_scems_db");
+$conn = new mysqli("localhost", "root", "Amni102030.", "fk_club_management");
 
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
@@ -11,7 +11,7 @@ if ($conn->connect_error) {
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // 2. Collect and sanitize input
     $selected_role = $_POST['role'];       // Role from dropdown (Admin, Student, etc.)
-    $input_user    = trim($_POST['username']); 
+    $input_user    = trim($_POST['username']);
     $input_pass    = $_POST['password'];
 
     // 3. Prepare query to find the user by their username
@@ -27,11 +27,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         // 4. Validate Role Match
         // We use strcasecmp to ensure "Admin" vs "admin" doesn't break the login
         if (strcasecmp($selected_role, $row['role']) == 0) {
-            
+
             // 5. Validate Password
             // Note: If you have hashed passwords, use password_verify($input_pass, $row['password'])
             if ($input_pass === $row['password']) {
-                
+
                 // 6. Setup Sessions
                 $_SESSION['SESS_USER_ID']   = $row['user_id'];
                 $_SESSION['SESS_USERNAME']  = $row['username'];
@@ -50,7 +50,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     header("Location: index.php");
                 }
                 exit();
-
             } else {
                 header("Location: login.php?error=invalid_password");
                 exit();
@@ -68,4 +67,3 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 }
 
 $conn->close();
-?>

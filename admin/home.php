@@ -3,8 +3,8 @@
 session_start();
 // If the user is not logged in send him/her to the login form
 if (!isset($_SESSION["Login"]) || $_SESSION["Login"] != "YES") {
-header("Location: ../index.html");
-exit();
+    header("Location: ../index.html");
+    exit();
 }
 ?>
 <!DOCTYPE html>
@@ -14,7 +14,7 @@ exit();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Home - Admin</title>
-    <link rel="stylesheet" href="../assets/css/student.css">
+    <link rel="stylesheet" href="../assets/css/admin.css">
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
@@ -23,10 +23,24 @@ exit();
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* Small overrides to make Bootstrap and Theme play nicely */
-        body { background-color: #ffffff; }
-        .table > :not(caption) > * > * { border-bottom-color: #eeeff2; }
-        .btn-umpsa-teal { background-color: #009e96; color: white; transition: 0.2s; }
-        .btn-umpsa-teal:hover { background-color: #1c3f95; color: white; }
+        body {
+            background-color: #ffffff;
+        }
+
+        .table> :not(caption)>*>* {
+            border-bottom-color: #eeeff2;
+        }
+
+        .btn-umpsa-teal {
+            background-color: #009e96;
+            color: white;
+            transition: 0.2s;
+        }
+
+        .btn-umpsa-teal:hover {
+            background-color: #1c3f95;
+            color: white;
+        }
     </style>
 </head>
 
@@ -42,7 +56,7 @@ exit();
         </div>
 
         <div class="nav-right">
-            <a href="home.php" class="nav-link">Home</a>
+            <a href="home.php" class="nav-link active-link">Home</a>
             <a href="manage_users.html" class="nav-link">Manage Users</a>
             <a href="manage_committees.html" class="nav-link">Manage Committees</a>
             <a href="manage_clubs.html" class="nav-link">Manage Clubs</a>

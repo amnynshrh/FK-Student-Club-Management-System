@@ -115,14 +115,14 @@
         // Check existing session
         (async () => {
             try {
-                const res = await fetch('/WEB PROJECT/api/auth/session.php', {
+                const res = await fetch('api/auth/session.php', {
                     credentials: 'same-origin'
                 });
 
                 const sess = await res.json();
 
                 if (sess.loggedIn) {
-                    window.location.href = `/WEB PROJECT/${sess.role}/home.html`;
+                    window.location.href = `${sess.role}/home.php`;
                 }
             } catch (error) {
                 console.log('Session check skipped.');

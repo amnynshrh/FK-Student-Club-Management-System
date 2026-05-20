@@ -1,28 +1,24 @@
 <?php
-// ============================================================
-// FK Student Club & Event Management System
-// Database Connection (PDO)
-// ============================================================
 
 define('DB_HOST', 'localhost');
-define('DB_NAME', 'fk_club_management');
+define('DB_NAME', 'fk_scems_db');
 define('DB_USER', 'root');
-define('DB_PASS', '');          // default XAMPP password is empty
+define('DB_PASS', 'Amni102030.');
 define('DB_CHARSET', 'utf8mb4');
 
-$dsn = "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=" . DB_CHARSET;
+$conn = mysqli_connect(DB_HOST, DB_USER, DB_PASS, DB_NAME);
 
-$options = [
-    PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,   // throw exceptions on error
-    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,         // return assoc arrays
-    PDO::ATTR_EMULATE_PREPARES   => false,                    // use real prepared statements
-];
+if (!$conn) {
+    error_log("Database connection failed: " . mysqli_connect_error());
 
-try {
-    $pdo = new PDO($dsn, DB_USER, DB_PASS, $options);
-} catch (PDOException $e) {
-    // In production, log error instead of displaying it
-    error_log("Database connection failed: " . $e->getMessage());
     http_response_code(500);
-    die(json_encode(['error' => 'Database connection failed. Please try again later.']));
+
+    echo json_encode([
+        "success" => false,
+        "message" => "Database connection failed. Please try again later."
+    ]);
+
+    exit;
 }
+
+mysqli_set_charset($conn, DB_CHARSET);

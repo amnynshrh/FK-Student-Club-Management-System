@@ -1,211 +1,253 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Edit Event - Committee</title>
 
     <!-- Bootstrap 5 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
 
     <!-- Bootstrap Icons -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
+      rel="stylesheet"
+    />
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
 
     <!-- Custom Theme UMPSA -->
-    <link rel="stylesheet" href="../assets/css/committee.css">
+    <link rel="stylesheet" href="../assets/css/committee.css" />
 
     <style>
-        body {
-            background-color: #ffffff;
-        }
+      body {
+        background-color: #ffffff;
+      }
 
-        .table> :not(caption)>*>* {
-            border-bottom-color: #eeeff2;
-        }
+      .table > :not(caption) > * > * {
+        border-bottom-color: #eeeff2;
+      }
 
-        .btn-umpsa-teal {
-            background-color: #009e96;
-            color: white;
-            transition: 0.2s;
-        }
+      .btn-umpsa-teal {
+        background-color: #009e96;
+        color: white;
+        transition: 0.2s;
+      }
 
-        .btn-umpsa-teal:hover {
-            background-color: #1c3f95;
-            color: white;
-        }
+      .btn-umpsa-teal:hover {
+        background-color: #1c3f95;
+        color: white;
+      }
 
-        .nav-right .nav-link.active-link {
-            color: #1c3f95;
-            font-weight: 700;
-        }
+      .nav-right .nav-link.active-link {
+        color: #1c3f95;
+        font-weight: 700;
+      }
+
+      .error-message {
+        color: #dc3545;
+        font-size: 13px;
+        margin-top: 6px;
+        display: block;
+      }
+
+      .input-error {
+        border: 1px solid #dc3545 !important;
+      }
     </style>
-</head>
+  </head>
 
-<body>
-
+  <body>
     <!-- Top Navbar -->
     <header class="top-navbar">
-        <div class="nav-left">
-            <img src="../assets/images/uploads/logo-fk.png" alt="FK Logo" class="nav-logo"
-                onerror="this.src='../assets/images/logo-fk.png';">
+      <div class="nav-left">
+        <img
+          src="../assets/images/uploads/logo-fk.png"
+          alt="FK Logo"
+          class="nav-logo"
+          onerror="this.src = '../assets/images/logo-fk.png'"
+        />
 
-            <div class="nav-brand">
-                FK Student Club &<br>Management System
-            </div>
-        </div>
+        <div class="nav-brand">FK Student Club &<br />Management System</div>
+      </div>
 
-        <div class="nav-right">
-            <a href="home.html" class="nav-link">Home</a>
-            <a href="view_club.html" class="nav-link">View Club</a>
-            <a href="manage_events.html" class="nav-link active-link">Manage Events</a>
-            <a href="manage_attendance.html" class="nav-link">Manage Attendance</a>
-            <a href="attendance_record.html" class="nav-link">Attendance Records</a>
-            <a href="profile.html" class="nav-link">Profile</a>
-            <a href="../api/auth/logout.php" class="nav-link">Log Out</a>
-        </div>
+      <div class="nav-right">
+        <a href="home.php" class="nav-link">Home</a>
+        <a href="view_club.html" class="nav-link">View Club</a>
+        <a href="manage_events.html" class="nav-link active-link"
+          >Manage Events</a
+        >
+        <a href="manage_attendance.html" class="nav-link">Manage Attendance</a>
+        <a href="attendance_record.html" class="nav-link">Attendance Records</a>
+        <a href="profile.html" class="nav-link">Profile</a>
+        <a href="../api/auth/logout.php" class="nav-link">Log Out</a>
+      </div>
     </header>
 
     <!-- Main Content -->
     <main class="student-content">
+      <div class="page-header">
+        <h1 class="page-title">Edit Event</h1>
 
-        <div class="page-header">
-            <h1 class="page-title">Edit Event</h1>
+        <p class="page-subtitle">Edit and update the event details.</p>
+      </div>
 
-            <p class="page-subtitle">
-                Edit and update the event details.
-            </p>
-        </div>
+      <!-- Form Card -->
+      <div class="event-form-card">
+        <form id="editEventForm" novalidate>
+          <!-- Event Title -->
+          <div class="mb-4">
+            <label class="form-label-custom">
+              Event Title <span class="required-star">*</span>
+            </label>
 
-        <!-- Form Card -->
-        <div class="event-form-card">
+            <input
+              type="text"
+              id="eventTitle"
+              class="form-control form-control-custom"
+              placeholder="Enter event title"
+            />
 
-            <form action="#" method="POST">
+            <small class="error-message" id="titleError"></small>
+          </div>
 
-                <!-- Event Title -->
-                <div class="mb-4">
-                    <label class="form-label-custom">
-                        Event Title <span class="required-star">*</span>
-                    </label>
+          <!-- Description -->
+          <div class="mb-4">
+            <label class="form-label-custom">
+              Description <span class="required-star">*</span>
+            </label>
 
-                    <input type="text" name="event_title" class="form-control form-control-custom"
-                        value="Coding Workshop" required>
-                </div>
+            <textarea
+              id="eventDescription"
+              class="form-control form-control-custom textarea-custom"
+              placeholder="Enter event description"
+            ></textarea>
 
-                <!-- Description -->
-                <div class="mb-4">
-                    <label class="form-label-custom">
-                        Description <span class="required-star">*</span>
-                    </label>
+            <small class="error-message" id="descriptionError"></small>
+          </div>
 
-                    <textarea name="description" class="form-control form-control-custom textarea-custom"
-                        required>Coding workshop for FK students to improve their basic programming and problem-solving skills.</textarea>
-                </div>
+          <!-- Date & Time -->
+          <div class="row">
+            <!-- Event Date -->
+            <div class="col-md-4 mb-4">
+              <label class="form-label-custom">
+                Event Date <span class="required-star">*</span>
+              </label>
 
-                <!-- Date and Time -->
-                <div class="row">
+              <div class="custom-input-wrapper">
+                <input
+                  type="date"
+                  id="eventDate"
+                  class="form-control-custom custom-date-input"
+                />
 
-                    <!-- Event Date -->
-                    <div class="col-md-6 mb-4">
-                        <label class="form-label-custom">
-                            Event Date <span class="required-star">*</span>
-                        </label>
+                <button type="button" class="input-icon-btn">
+                  <i class="bi bi-calendar-event"></i>
+                </button>
+              </div>
 
-                        <div class="custom-input-wrapper">
-                            <input type="date" name="event_date" class="form-control-custom custom-date-input"
-                                value="2026-07-12" required>
+              <small class="error-message" id="dateError"></small>
+            </div>
 
-                            <button type="button" class="input-icon-btn">
-                                <i class="bi bi-calendar-event"></i>
-                            </button>
-                        </div>
-                    </div>
+            <!-- Start Time -->
+            <div class="col-md-4 mb-4">
+              <label class="form-label-custom">
+                Start Time <span class="required-star">*</span>
+              </label>
 
-                    <!-- Event Time -->
-                    <div class="col-md-6 mb-4">
-                        <label class="form-label-custom">
-                            Event Time <span class="required-star">*</span>
-                        </label>
+              <div class="custom-input-wrapper">
+                <input
+                  type="time"
+                  id="eventStartTime"
+                  class="form-control-custom custom-time-input"
+                />
 
-                        <div class="custom-input-wrapper">
-                            <input type="time" name="event_time" class="form-control-custom custom-time-input"
-                                value="22:30" required>
+                <button type="button" class="input-icon-btn">
+                  <i class="bi bi-clock"></i>
+                </button>
+              </div>
 
-                            <button type="button" class="input-icon-btn">
-                                <i class="bi bi-clock"></i>
-                            </button>
-                        </div>
-                    </div>
+              <small class="error-message" id="startTimeError"></small>
+            </div>
 
-                </div>
+            <!-- End Time -->
+            <div class="col-md-4 mb-4">
+              <label class="form-label-custom">
+                End Time <span class="required-star">*</span>
+              </label>
 
-                <!-- Venue -->
-                <div class="mb-4">
-                    <label class="form-label-custom">
-                        Venue <span class="required-star">*</span>
-                    </label>
+              <div class="custom-input-wrapper">
+                <input
+                  type="time"
+                  id="eventEndTime"
+                  class="form-control-custom custom-time-input"
+                />
 
-                    <input type="text" name="venue" class="form-control form-control-custom" value="FK Room A" required>
-                </div>
+                <button type="button" class="input-icon-btn">
+                  <i class="bi bi-clock"></i>
+                </button>
+              </div>
 
-                <!-- Participants and Status -->
-                <div class="row">
+              <small class="error-message" id="endTimeError"></small>
+            </div>
+          </div>
 
-                    <!-- Max Participants -->
-                    <div class="col-md-6 mb-4">
-                        <label class="form-label-custom">
-                            Max Participants <span class="required-star">*</span>
-                        </label>
+          <!-- Venue -->
+          <div class="mb-4">
+            <label class="form-label-custom">
+              Venue <span class="required-star">*</span>
+            </label>
 
-                        <input type="number" name="max_participants" class="form-control form-control-custom" value="40"
-                            min="1" required>
-                    </div>
+            <input
+              type="text"
+              id="eventVenue"
+              class="form-control form-control-custom"
+              placeholder="Enter venue"
+            />
 
-                    <!-- Status -->
-                    <div class="col-md-6 mb-4">
-                        <label class="form-label-custom">
-                            Event Status <span class="required-star">*</span>
-                        </label>
+            <small class="error-message" id="venueError"></small>
+          </div>
 
-                        <select name="event_status" class="form-select form-select-custom" required>
-                            <option value="Upcoming">Upcoming</option>
-                            <option value="Ongoing" selected>Ongoing</option>
-                            <option value="Completed">Completed</option>
-                            <option value="Cancelled">Cancelled</option>
-                        </select>
-                    </div>
+          <!-- Max Participants -->
+          <div class="mb-4">
+            <label class="form-label-custom">
+              Max Participants <span class="required-star">*</span>
+            </label>
 
-                </div>
+            <input
+              type="number"
+              id="eventParticipants"
+              class="form-control form-control-custom"
+              placeholder="Enter maximum participants"
+            />
 
-                <!-- Divider -->
-                <div class="section-divider"></div>
+            <small class="error-message" id="participantsError"></small>
+          </div>
 
-                <!-- Buttons -->
-                <div class="button-group-custom">
+          <!-- Divider -->
+          <div class="section-divider"></div>
 
-                    <a href="manage_events.html" class="btn-cancel-custom">
-                        Cancel
-                    </a>
+          <!-- Buttons -->
+          <div class="button-group-custom">
+            <a href="manage_events.html" class="btn-cancel-custom"> Cancel </a>
 
-                    <a href="manage_events.html" class="btn-save-custom">
-                        <i class="bi bi-check-circle me-2"></i>
-                        Update Event
-                    </a>
-
-                </div>
-
-            </form>
-
-        </div>
-
+            <button type="submit" class="btn-save-custom">
+              <i class="bi bi-check-circle me-2"></i>
+              Update Event
+            </button>
+          </div>
+        </form>
+      </div>
     </main>
+
+    <!-- Custom JavaScript -->
+    <script src="../assets/js/committee/edit_event.js"></script>
 
     <!-- Bootstrap 5 JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
-</body>
-
+  </body>
 </html>

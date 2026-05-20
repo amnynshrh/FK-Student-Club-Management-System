@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Event Registration - Student</title>
+    <title>Event Registration History - Student</title>
 
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -15,8 +15,8 @@
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
 
-    <!-- Custom Theme UMPSA -->
-    <link rel="stylesheet" href="../assets/css/student.css?v=student-waiting-1">
+    <!-- Student Theme CSS -->
+    <link rel="stylesheet" href="../assets/css/student.css?v=student-layout-1">
 
     <style>
         body {
@@ -47,11 +47,12 @@
 
 <body>
 
-    <!-- Eventbrite Style Navbar -->
+    <!-- Navbar -->
     <header class="top-navbar">
         <div class="nav-left">
             <img src="../assets/images/uploads/logo-fk.png" alt="FK Logo" class="nav-logo"
                 onerror="this.src='../assets/images/logo-fk.png';">
+
             <div class="nav-brand">
                 FK Student Club &<br>Management System
             </div>
@@ -68,14 +69,43 @@
     </header>
 
     <!-- Main Content -->
-    <main class="student-content">
+    <main class="student-content history-page">
 
         <!-- Title -->
-        <h1 class="page-title">Event Registration</h1>
+        <div class="history-header">
+            <h1 class="page-title">Events Registration History</h1>
+            <p class="page-subtitle">
+                View all events you have registered, attended, upcoming, or cancelled.
+            </p>
+        </div>
         <div id="successMessage" class="alert alert-success d-none" role="alert"></div>
 
-        <!-- Summary Cards - SAME THEME AS COMMITTEE -->
-        <div class="summary-cards-custom">
+        <!-- Summary Cards -->
+        <div class="history-summary-cards">
+
+            <div class="summary-card">
+                <div class="summary-icon navy">
+                    <i class="bi bi-person-check"></i>
+                </div>
+
+                <div>
+                    <p class="summary-label">Total Registered</p>
+                    <h3 class="summary-number">0</h3>
+                    <span class="summary-small-text">Events</span>
+                </div>
+            </div>
+
+            <div class="summary-card">
+                <div class="summary-icon teal">
+                    <i class="bi bi-star"></i>
+                </div>
+
+                <div>
+                    <p class="summary-label">Attended</p>
+                    <h3 class="summary-number">0</h3>
+                    <span class="summary-small-text">Events</span>
+                </div>
+            </div>
 
             <div class="summary-card">
                 <div class="summary-icon navy">
@@ -83,37 +113,28 @@
                 </div>
 
                 <div>
-                    <p class="summary-label">Available Events</p>
-                    <h3 class="summary-number" id="availableEvents">0</h3>
+                    <p class="summary-label">Upcoming</p>
+                    <h3 class="summary-number">0</h3>
+                    <span class="summary-small-text">Events</span>
                 </div>
             </div>
 
             <div class="summary-card">
                 <div class="summary-icon teal">
-                    <i class="bi bi-check-circle"></i>
+                    <i class="bi bi-calendar-x"></i>
                 </div>
 
                 <div>
-                    <p class="summary-label">Registered</p>
-                    <h3 class="summary-number" id="registeredEvents">0</h3>
-                </div>
-            </div>
-
-            <div class="summary-card">
-                <div class="summary-icon navy">
-                    <i class="bi bi-clock-history"></i>
-                </div>
-
-                <div>
-                    <p class="summary-label">Waiting List</p>
-                    <h3 class="summary-number" id="waitingEvents">0</h3>
+                    <p class="summary-label">Cancelled</p>
+                    <h3 class="summary-number">0</h3>
+                    <span class="summary-small-text">Events</span>
                 </div>
             </div>
 
         </div>
 
-        <!-- Controls - SAME THEME AS COMMITTEE -->
-        <div class="controls-row-custom">
+        <!-- Controls -->
+        <div class="controls-row-custom history-controls">
 
             <div class="search-box-custom">
                 <span class="search-icon-custom">
@@ -123,29 +144,31 @@
                 <input type="text" id="searchTitle" placeholder="Search by Event Title">
             </div>
 
-            <a href="event_registration_history.html" class="btn-history-event text-decoration-none">
-                <i class="bi bi-clock-history me-2"></i>
-                Your Event Registration History
+            <a href="event_registration.html" class="btn-back-registration text-decoration-none">
+                <i class="bi bi-arrow-left me-2"></i>
+                Back to Registration
             </a>
 
         </div>
 
-        <!-- Table Card - SAME THEME AS COMMITTEE -->
+        <!-- Table Card -->
         <div class="table-card-custom">
 
             <!-- Filters -->
-            <div class="table-filter-row">
-
-                <select class="filter-select-custom" id="clubFilter">
-                    <option value="all">List of Club</option>
-                </select>
+            <div class="table-filter-row history-filter-row">
 
                 <select class="filter-select-custom" id="statusFilter">
                     <option value="all">Show All Status</option>
-                    <option value="Open">Open</option>
-                    <option value="Full">Full</option>
+                    <option value="Attended">Attended</option>
+                    <option value="Late">Late</option>
+                    <option value="Upcoming">Upcoming</option>
+                    <option value="Ongoing">Ongoing</option>
                     <option value="Completed">Completed</option>
                     <option value="Cancelled">Cancelled</option>
+                </select>
+
+                <select class="filter-select-custom" id="yearFilter">
+                    <option value="all">List of Year</option>
                 </select>
 
                 <select class="filter-select-custom" id="monthFilter">
@@ -177,15 +200,15 @@
                             <th>Date</th>
                             <th>Time</th>
                             <th>Venue</th>
-                            <th>Capacity</th>
                             <th>Status</th>
+                            <th>Points Earn</th>
                             <th>Action</th>
                         </tr>
                     </thead>
 
-                    <tbody id="eventTableBody">
+                    <tbody id="historyTableBody">
                         <tr>
-                            <td colspan="7" class="text-center py-4 text-muted">Loading events...</td>
+                            <td colspan="7" class="text-center py-4 text-muted">Loading registration history...</td>
                         </tr>
                     </tbody>
 
@@ -224,7 +247,8 @@
 
     <!-- Bootstrap 5 JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="../assets/js/student/event_registration.js?v=student-waiting-1"></script>
+    <script src="../assets/js/student/event_registration_history.js?v=student-crud-1"></script>
+
 </body>
 
 </html>
