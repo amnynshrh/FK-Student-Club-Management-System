@@ -1,0 +1,488 @@
+/* Variables */
+:root {
+    --fk-blue: #004a99;
+    --bg-gray: #f4f7f6;
+    --white: #ffffff;
+    --text-muted: #6c757d;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+}
+
+body {
+    background-color: var(--bg-gray);
+    color: #333;
+}
+
+/* TOP NAVIGATION */
+.top-navigation {
+    background: var(--white);
+    border-bottom: 1px solid #ddd;
+    padding: 10px 0;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.nav-wrapper {
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+}
+
+.logo img { height: 45px; }
+
+.menu-links {
+    list-style: none;
+    display: flex;
+    gap: 10px;
+}
+
+.menu-links a {
+    text-decoration: none;
+    color: #444;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    padding: 10px 15px;
+    border-radius: 5px;
+}
+
+.menu-links a.active {
+    background-color: #eef5ff;
+    color: var(--fk-blue);
+}
+
+.admin-profile {
+    font-weight: bold;
+    color: var(--fk-blue);
+}
+
+/* PAGE LAYOUT */
+.page-container {
+    max-width: 1200px;
+    margin: 30px auto;
+    padding: 0 20px;
+}
+
+.page-header h1 { font-size: 1.6rem; color: #222; }
+.page-header p { color: var(--text-muted); margin-bottom: 25px; }
+
+/* METRIC CARDS */
+.metrics-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.menu-links a.active {
+    background-color: #eef5ff;
+    color: var(--fk-blue);
+    border-bottom: 3px solid var(--fk-blue); /* This creates the underline effect */
+}
+
+.metric-card {
+    background: var(--white);
+    padding: 20px;
+    border-radius: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.metric-label { color: var(--text-muted); font-size: 0.8rem; font-weight: bold; }
+.metric-value { font-size: 1.8rem; margin-top: 5px; }
+
+.metric-icon-box {
+    font-size: 1.5rem;
+    padding: 12px;
+    border-radius: 10px;
+}
+
+.blue-icon { background: #e7f1ff; color: var(--fk-blue); }
+.red-icon { background: #ffe5e5; color: #dc3545; }
+
+/* DASHBOARD CHARTS */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.chart-card {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.chart-card h6 {
+    margin-bottom: 20px;
+    color: #555;
+    font-size: 14px;
+    text-transform: uppercase;
+}
+
+/* TABLE AREA */
+.table-container {
+    background: var(--white);
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.table-top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+
+.member-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.member-table th {
+    text-align: left;
+    background-color: #f8f9fa;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    padding: 15px;
+    border-bottom: 2px solid #eee;
+}
+
+.member-table td {
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+    font-size: 0.9rem;
+}
+
+/* BADGES & BUTTONS */
+
+.student-badge { 
+    background-color: #007bff; 
+    color: white; 
+}
+
+.committee-badge { 
+    background-color: #ffc107; /* Yellow/Orange */
+    color: #333; /* Dark text for contrast */
+}
+.admin-red-badge {
+    background-color: #ff061a;
+    color: white;
+}
+
+.action-btn {
+    border: 1px solid var(--fk-blue);
+    background: none;
+    color: var(--fk-blue);
+    cursor: pointer;
+    font-weight: bold;
+    padding: 5px 12px;
+    border-radius: 4px;
+    transition: 0.2s;
+}
+
+.action-btn:hover {
+    background: var(--fk-blue);
+    color: white;
+}
+
+.text-center { text-align: center; }
+
+/* PARTICIPATION HISTORY CARD */
+
+.participation-card {
+    background: var(--white);
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    margin-top: 20px;
+}
+
+/* TOP SECTION */
+
+.top-section {
+    display: grid;
+    grid-template-columns: 2fr 1fr 2fr;
+    gap: 20px;
+    align-items: center;
+    margin-bottom: 25px;
+    margin-left: 30px;
+    margin-right: 30px;
+}
+
+/* STUDENT PROFILE */
+
+.student-profile {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+
+.student-profile img {
+    width: 95px;
+    height: 95px;
+    border-radius: 14px;
+    object-fit: cover;
+    border: 1px solid #ddd;
+}
+
+.student-info h2 {
+    font-size: 1.4rem;
+    margin-bottom: 6px;
+    color: #222;
+}
+
+.student-info p {
+    color: var(--text-muted);
+    margin-bottom: 4px;
+    font-size: 0.95rem;
+}
+
+/* SUMMARY BOXES */
+
+.points-box,
+.recognition-box {
+    background: #fafafa;
+    border: 1px solid #eee;
+    border-radius: 12px;
+    padding: 22px;
+    text-align: center;
+    height: 100%;
+}
+
+.points-box p,
+.recognition-box p {
+    font-size: 0.85rem;
+    font-weight: bold;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+}
+
+.points-box h1 {
+    font-size: 3rem;
+    color: #222;
+}
+
+.recognition-level {
+    font-size: 1.3rem;
+    font-weight: bold;
+    margin-top: 10px;
+}
+
+/* PROGRESS BAR */
+
+.progress-wrapper {
+    margin-bottom: 30px;
+}
+
+.progress-bar {
+    display: flex;
+    overflow: hidden;
+    border-radius: 20px;
+    height: 16px;
+    margin-bottom: 10px;
+    margin-right: 30px;
+    margin-left: 30px;
+}
+
+.segment {
+    flex: 1;
+}
+
+.red {
+    background: #e00a0a;
+}
+
+.yellow {
+    background: #ebc002;
+}
+
+.dark-blue {
+    background: #2563eB;
+}
+
+.green {
+    background: #198754;
+}
+
+.progress-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: #555;
+    font-weight: 600;
+}
+
+.progress-labels span {
+    margin-right: 30px;
+    margin-left: 30px;
+    padding-right: 60px;
+    padding-left: 60px;
+}
+
+/* BOTTOM SECTION */
+
+.bottom-section {
+    display: grid;
+    grid-template-columns: 3fr 1.2fr;
+    gap: 20px;
+}
+
+/* HISTORY BOX */
+
+.history-box,
+.summary-box {
+    background: #fff;
+    border: 1px solid #eee;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.history-box h3,
+.summary-box h3 {
+    padding: 18px 20px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #eee;
+    font-size: 1rem;
+    color: #333;
+}
+
+/* TABLE */
+
+.history-box table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.history-box th {
+    text-align: left;
+    background-color: #fafafa;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    padding: 14px 18px;
+    border-bottom: 1px solid #eee;
+    text-transform: uppercase;
+}
+
+.history-box td {
+    padding: 15px 18px;
+    border-bottom: 1px solid #f1f1f1;
+    font-size: 0.9rem;
+}
+
+.history-box tr:last-child td {
+    border-bottom: none;
+}
+
+/* SUMMARY */
+
+.summary-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 20px;
+    border-bottom: 1px solid #f1f1f1;
+    font-size: 0.92rem;
+}
+
+.summary-item:last-child {
+    border-bottom: none;
+}
+
+.summary-item strong {
+    color: #222;
+}
+
+/* BADGES */
+
+.badge {
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    font-weight: bold;
+    display: inline-block;
+}
+
+.present {
+    background: #d1f7dd;
+    color: #198754;
+}
+
+.volunteer {
+    background: #dbeafe;
+    color: #2563eb;
+}
+
+.late {
+    background: #fff3cd;
+    color: #b58105;
+}
+
+.absent {
+    background: #ffe2e5;
+    color: #dc3545;
+}
+
+/* POINT COLORS */
+
+.positive {
+    color: #198754;
+    font-weight: bold;
+}
+
+.negative {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+.recognition-red {
+    color: #dc3545;
+}
+
+.recognition-yellow {
+    color: #ffc107;
+}
+
+.recognition-blue {
+    color: #2563EB;
+}
+
+.recognition-green {
+    color: #28a745;
+}
+
+/* RESPONSIVE */
+
+@media (max-width: 992px) {
+
+    .top-section {
+        grid-template-columns: 1fr;
+    }
+
+    .bottom-section {
+        grid-template-columns: 1fr;
+    }
+
+    .student-profile {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .progress-labels {
+        font-size: 0.7rem;
+    }
+}

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Clubs - Delete</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <?php include('adminHeader.php') ?>
+
+    <div class="form-container wide-container">
+        <h2>Manage Student Clubs</h2>
+        <p class="subtitle">Module 2: View and Remove Registered Clubs</p>
+        <hr>
+
+        <!-- Club List Table -->
+        <table class="club-table">
+            <thead>
+                <tr>
+                    <th>Club Name</th>
+                    <th>Advisor Name</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Row 1 -->
+                <tr id="club-row-101">
+                    <td><strong>Computer Science Club</strong></td>
+                    <td>Dr. Ahmad Bin Ali</td>
+                    <td><span class="status-badge active">Active</span></td>
+                    <td>
+                        <button type="button" class="btn-delete" onclick="confirmDelete(101, 'Computer Science Club')">Delete</button>
+                    </td>
+                </tr>
+                <!-- Row 2 -->
+                <tr id="club-row-102">
+                    <td><strong>Data Science Society</strong></td>
+                    <td>Dr. Siti Aminah</td>
+                    <td><span class="status-badge active">Active</span></td>
+                    <td>
+                        <button type="button" class="btn-delete" onclick="confirmDelete(102, 'Data Science Society')">Delete</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Hidden Delete Confirmation Modal -->
+    <div id="deleteModal" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-header">Confirm Deletion</div>
+            <div class="modal-body">
+                Are you sure you want to permanently delete <strong id="deleteClubName"></strong>? This action cannot be undone and will clear all associated committee records.
+            </div>
+            <div class="modal-footer">
+                <!-- Trigger hidden native HTML form submission to PHP -->
+                <form action="delete_club_process.php" method="POST">
+                    <input type="hidden" id="deleteClubId" name="club_id" value="">
+                    <button type="button" class="btn-cancel" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn-danger-confirm">Yes, Delete Club</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
