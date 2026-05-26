@@ -23,7 +23,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 </a>
             </li>
             <li>
-                <a href="view_event.php" class="<?php echo ($current_page == 'view_event.php') ? 'active' : ''; ?>">
+                <a href="event_registration.php" class="<?php echo ($current_page == 'event_registration.php') ? 'active' : ''; ?>">
                     Activities
                 </a>
             </li>
@@ -33,7 +33,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 </a>
             </li>
             <li>
-                <a href="#" class="<?php echo ($current_page == '#') ? 'active' : ''; ?>">
+                <a href="attendance.php" class="<?php echo ($current_page == 'attendance.php') ? 'active' : ''; ?>">
                     Attendance
                 </a>
             </li>

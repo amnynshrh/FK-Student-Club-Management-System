@@ -103,7 +103,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
             <li>
                 <a 
                     href="student_list.php"
-                    class="<?php echo ($current_page == 'student_list.php') ? 'active' : ''; ?>"
+                    class="<?php echo ($current_page == 'student_list.php' || $current_page == 'student_participation.php') ? 'active' : ''; ?>"
                 >
                     Participation Tracking
                 </a>

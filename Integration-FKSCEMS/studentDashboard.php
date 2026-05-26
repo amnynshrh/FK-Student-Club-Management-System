@@ -8,12 +8,6 @@ header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
 header("Cache-Control: post-check=0, pre-check=0", false);
 header("Pragma: no-cache");
 
-// 2. CHECK LOGIN & ROLE: Only allow Students
-if (!isset($_SESSION['SESS_ROLE']) || $_SESSION['SESS_ROLE'] !== 'Student') {
-    header("Location: login.php");
-    exit();
-}
-
 // 3. DATABASE CONNECTION
 // Ensure the database name matches what you used in register.php
 $servername = "localhost";

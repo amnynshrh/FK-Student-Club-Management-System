@@ -140,7 +140,7 @@ else {
         <div class="table-container">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                 <h3 class="card-title" style="margin: 0;">Recent Event Participants</h3>
-                <button class="action-btn edit" onclick="window.location.href='manageEvents.php'">+ Create Event</button>
+                <button class="action-btn edit" onclick="window.location.href='add_event.php'">+ Create Event</button>
             </div>
             <table class="member-table">
                 <thead>

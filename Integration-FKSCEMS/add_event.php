@@ -280,7 +280,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
           <!-- Buttons -->
           <div class="button-group-custom">
-            <a href="manage_events.php" class="btn-cancel-custom"> Cancel </a>
+            <button type="button" class="btn-cancel-custom" onclick="window.history.back()">Cancel</button>
 
             <button type="submit" class="btn-save-custom">
               <i class="bi bi-check-circle me-2"></i>

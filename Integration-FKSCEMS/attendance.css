@@ -1,0 +1,401 @@
+/* =========================================
+   PAGE LAYOUT
+========================================= */
+
+.page-container {
+
+    max-width: 1200px;
+
+    margin: 30px auto;
+
+    padding: 0 20px;
+}
+
+/* =========================================
+   TABLE CONTAINER
+========================================= */
+
+.table-container {
+
+    background: white;
+
+    border-radius: 18px;
+
+    padding: 25px;
+
+    box-shadow: 0 4px 18px rgba(0,0,0,0.06);
+
+    overflow: hidden;
+}
+
+/* =========================================
+   TABLE TITLE
+========================================= */
+
+.card-title {
+
+    font-size: 1.3rem;
+
+    font-weight: 700;
+
+    color: #1e293b;
+
+    margin-bottom: 20px;
+}
+
+/* =========================================
+   TABLE
+========================================= */
+
+.member-table {
+
+    width: 100%;
+
+    border-collapse: collapse;
+}
+
+.member-table thead {
+
+    background: #f8fafc;
+}
+
+.member-table th {
+
+    padding: 18px 16px;
+
+    text-align: left;
+
+    font-size: 13px;
+
+    font-weight: 700;
+
+    color: #64748b;
+
+    text-transform: uppercase;
+
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.member-table td {
+
+    padding: 18px 16px;
+
+    border-bottom: 1px solid #f1f5f9;
+
+    font-size: 15px;
+
+    color: #334155;
+}
+
+/* =========================================
+   HOVER EFFECT
+========================================= */
+
+.member-table tbody tr {
+
+    transition: 0.2s ease;
+}
+
+.member-table tbody tr:hover {
+
+    background: #f8fbff;
+
+    transform: scale(1.003);
+}
+
+/* =========================================
+   BADGES
+========================================= */
+
+.badge {
+
+    display: inline-block;
+
+    padding: 6px 12px;
+
+    border-radius: 999px;
+
+    font-size: 12px;
+
+    font-weight: 700;
+}
+
+.badge-upcoming {
+
+    background: #dbeafe;
+
+    color: #2563eb;
+}
+
+.badge-completed {
+
+    background: #dcfce7;
+
+    color: #16a34a;
+}
+
+/* =========================================
+   BUTTONS
+========================================= */
+
+.action-btn {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    padding: 10px 16px;
+
+    border-radius: 10px;
+
+    font-size: 14px;
+
+    font-weight: 600;
+
+    text-decoration: none;
+
+    transition: 0.2s ease;
+
+    cursor: pointer;
+
+    border: none;
+}
+
+/* PRIMARY */
+
+.action-btn.edit {
+
+    background: #2563eb;
+
+    color: white;
+}
+
+.action-btn.edit:hover {
+
+    background: #1d4ed8;
+
+    transform: translateY(-2px);
+
+    box-shadow: 0 6px 14px rgba(37,99,235,0.25);
+}
+
+/* SUCCESS */
+
+.action-btn.success {
+
+    background: #16a34a;
+
+    color: white;
+}
+
+.action-btn.success:hover {
+
+    background: #15803d;
+
+    transform: translateY(-2px);
+
+    box-shadow: 0 6px 14px rgba(22,163,74,0.25);
+}
+
+/* DISABLED */
+
+.action-btn.disabled {
+
+    background: #cbd5e1;
+
+    color: #64748b;
+
+    cursor: not-allowed;
+}
+
+/* =========================================
+   EMPTY STATE
+========================================= */
+
+.empty-state {
+
+    text-align: center;
+
+    padding: 40px 20px;
+
+    color: #94a3b8;
+
+    font-size: 15px;
+}
+
+/* =========================================
+   RESPONSIVE
+========================================= */
+
+@media (max-width: 768px) {
+
+    .table-container {
+
+        overflow-x: auto;
+    }
+
+    .member-table {
+
+        min-width: 750px;
+    }
+}
+
+/* =========================================
+   MODAL
+========================================= */
+
+.modal-overlay {
+
+    position: fixed;
+
+    inset: 0;
+
+    background: rgba(0,0,0,0.45);
+
+    display: none;
+
+    align-items: center;
+
+    justify-content: center;
+
+    z-index: 9999;
+}
+
+.modal-box {
+
+    width: 100%;
+
+    max-width: 480px;
+
+    background: white;
+
+    border-radius: 20px;
+
+    padding: 28px;
+
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+
+    animation: modalFade 0.2s ease;
+}
+
+@keyframes modalFade {
+
+    from {
+        transform: translateY(15px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* HEADER */
+
+.modal-header {
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    margin-bottom: 20px;
+}
+
+.modal-header h3 {
+
+    margin: 0;
+
+    font-size: 22px;
+
+    color: #1e293b;
+}
+
+.close-btn {
+
+    background: none;
+
+    border: none;
+
+    font-size: 28px;
+
+    cursor: pointer;
+
+    color: #64748b;
+}
+
+/* INPUTS */
+
+.modal-label {
+
+    display: block;
+
+    margin-bottom: 8px;
+
+    font-weight: 600;
+
+    color: #334155;
+}
+
+.modal-input {
+
+    width: 100%;
+
+    padding: 12px 14px;
+
+    border: 1px solid #cbd5e1;
+
+    border-radius: 10px;
+
+    margin-bottom: 18px;
+}
+
+/* ACTIONS */
+
+.modal-actions {
+
+    display: flex;
+
+    justify-content: flex-end;
+
+    gap: 12px;
+
+    margin-top: 10px;
+}
+
+.cancel-btn {
+
+    padding: 10px 18px;
+
+    border-radius: 10px;
+
+    border: none;
+
+    background: #e2e8f0;
+
+    cursor: pointer;
+}
+
+.submit-btn {
+
+    padding: 10px 18px;
+
+    border-radius: 10px;
+
+    border: none;
+
+    background: #2563eb;
+
+    color: white;
+
+    cursor: pointer;
+}
+
+.submit-btn:hover {
+
+    background: #1d4ed8;
+}

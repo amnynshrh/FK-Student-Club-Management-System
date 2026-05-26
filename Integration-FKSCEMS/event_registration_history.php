@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Registration History - Student</title>
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Student Theme CSS -->
+    <link rel="stylesheet" href="assets/css/student.css?v=student-layout-1">
+
+    <style>
+        body {
+            background-color: #ffffff;
+        }
+
+        .table> :not(caption)>*>* {
+            border-bottom-color: #eeeff2;
+        }
+
+        .btn-umpsa-teal {
+            background-color: #009e96;
+            color: white;
+            transition: 0.2s;
+        }
+
+        .btn-umpsa-teal:hover {
+            background-color: #1c3f95;
+            color: white;
+        }
+
+        .nav-right .nav-link.active-link {
+            color: #1c3f95;
+            font-weight: 700;
+        }
+    </style>
+</head>
+
+<body>
+
+    <?php include('studentHeader.php') ?>
+
+    <!-- Main Content -->
+    <main class="student-content history-page">
+
+        <!-- Title -->
+        <div class="history-header">
+            <h1 class="page-title">Events Registration History</h1>
+            <p class="page-subtitle">
+                View all events you have registered, attended, upcoming, or cancelled.
+            </p>
+        </div>
+        <div id="successMessage" class="alert alert-success d-none" role="alert"></div>
+
+        <!-- Summary Cards -->
+        <div class="history-summary-cards">
+
+            <div class="summary-card">
+                <div class="summary-icon navy">
+                    <i class="bi bi-person-check"></i>
+                </div>
+
+                <div>
+                    <p class="summary-label">Total Registered</p>
+                    <h3 class="summary-number">0</h3>
+                    <span class="summary-small-text">Events</span>
+                </div>
+            </div>
+
+            <div class="summary-card">
+                <div class="summary-icon teal">
+                    <i class="bi bi-star"></i>
+                </div>
+
+                <div>
+                    <p class="summary-label">Attended</p>
+                    <h3 class="summary-number">0</h3>
+                    <span class="summary-small-text">Events</span>
+                </div>
+            </div>
+
+            <div class="summary-card">
+                <div class="summary-icon navy">
+                    <i class="bi bi-calendar-event"></i>
+                </div>
+
+                <div>
+                    <p class="summary-label">Upcoming</p>
+                    <h3 class="summary-number">0</h3>
+                    <span class="summary-small-text">Events</span>
+                </div>
+            </div>
+
+            <div class="summary-card">
+                <div class="summary-icon teal">
+                    <i class="bi bi-calendar-x"></i>
+                </div>
+
+                <div>
+                    <p class="summary-label">Cancelled</p>
+                    <h3 class="summary-number">0</h3>
+                    <span class="summary-small-text">Events</span>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Controls -->
+        <div class="controls-row-custom history-controls">
+
+            <div class="search-box-custom">
+                <span class="search-icon-custom">
+                    <i class="bi bi-search"></i>
+                </span>
+
+                <input type="text" id="searchTitle" placeholder="Search by Event Title">
+            </div>
+
+            <a href="event_registration.php" class="btn-back-registration text-decoration-none">
+                <i class="bi bi-arrow-left me-2"></i>
+                Back to Registration
+            </a>
+
+        </div>
+
+        <!-- Table Card -->
+        <div class="table-card-custom">
+
+            <!-- Filters -->
+            <div class="table-filter-row history-filter-row">
+
+                <select class="filter-select-custom" id="statusFilter">
+                    <option value="all">Show All Status</option>
+                    <option value="Attended">Attended</option>
+                    <option value="Late">Late</option>
+                    <option value="Upcoming">Upcoming</option>
+                    <option value="Ongoing">Ongoing</option>
+                    <option value="Completed">Completed</option>
+                    <option value="Cancelled">Cancelled</option>
+                </select>
+
+                <select class="filter-select-custom" id="yearFilter">
+                    <option value="all">List of Year</option>
+                </select>
+
+                <select class="filter-select-custom" id="monthFilter">
+                    <option value="all">List of Month</option>
+                    <option value="January">January</option>
+                    <option value="February">February</option>
+                    <option value="March">March</option>
+                    <option value="April">April</option>
+                    <option value="May">May</option>
+                    <option value="June">June</option>
+                    <option value="July">July</option>
+                    <option value="August">August</option>
+                    <option value="September">September</option>
+                    <option value="October">October</option>
+                    <option value="November">November</option>
+                    <option value="December">December</option>
+                </select>
+
+            </div>
+
+            <!-- Table -->
+            <div class="table-responsive">
+
+                <table class="event-table-custom">
+
+                    <thead>
+                        <tr>
+                            <th>Event Title</th>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Venue</th>
+                            <th>Status</th>
+                            <th>Points Earn</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="historyTableBody">
+                        <tr>
+                            <td colspan="7" class="text-center py-4 text-muted">Loading registration history...</td>
+                        </tr>
+                    </tbody>
+
+                </table>
+
+            </div>
+
+            <!-- Pagination -->
+            <div class="pagination-custom" id="paginationContainer">
+
+                <button class="page-btn-custom">
+                    &laquo;
+                </button>
+
+                <button class="page-btn-custom active">
+                    1
+                </button>
+
+                <button class="page-btn-custom">
+                    2
+                </button>
+
+                <button class="page-btn-custom">
+                    3
+                </button>
+
+                <button class="page-btn-custom">
+                    &raquo;
+                </button>
+
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/student/event_registration_history.js?v=student-crud-1"></script>
+
+</body>
+
+</html>

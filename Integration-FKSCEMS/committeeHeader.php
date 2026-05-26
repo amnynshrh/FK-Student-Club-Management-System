@@ -35,8 +35,8 @@ $current_page = basename($_SERVER['PHP_SELF']);
             </li>
             <li>
                 <a 
-                    href="qrScanner.php"
-                    class="<?php echo ($current_page == 'qrScanner.php') ? 'active' : ''; ?>"
+                    href="manage_attendance.php"
+                    class="<?php echo ($current_page == 'manage_attendance.php') ? 'active' : ''; ?>"
                 >
                     Manage Attendance
                 </a>

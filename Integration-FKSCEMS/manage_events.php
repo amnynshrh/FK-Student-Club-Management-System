@@ -1,59 +1,3 @@
-<?php
-session_start();
-
-$servername = "localhost";
-$username = "root";
-$password = "";
-$dbname = "fk_scems_db";
-
-$conn = new mysqli($servername, $username, $password, $dbname);
-if ($conn->connect_error) { die("Connection failed: " . $conn->connect_error); }
-
-$committee_id = $_SESSION['SESS_COMMITTEE_ID'];
-$total_events = 0;
-$sql_total_events = "
-SELECT 
-COUNT(*) AS total_events
-FROM event
-WHERE committee_id = ?
-";
-
-$stmt_total = $conn->prepare($sql_total_events);
-$stmt_total->bind_param("i", $committee_id);
-$stmt_total->execute();
-$result_total = $stmt_total->get_result();
-$total_events = $result_total->fetch_assoc()['total_events'];
-
-$upcoming_events = 0;
-$sql_upcoming = "
-SELECT 
-COUNT(*) AS upcoming_events
-FROM event
-WHERE committee_id = ?
-AND CONCAT(event_date, ' ', event_time) > NOW()
-";
-
-$stmt_upcoming = $conn->prepare($sql_upcoming);
-$stmt_upcoming->bind_param("i", $committee_id);
-$stmt_upcoming->execute();
-$result_upcoming = $stmt_upcoming->get_result();
-$upcoming_events = $result_upcoming->fetch_assoc()['upcoming_events'];
-
-$completed_events = 0;
-$sql_completed = "
-SELECT 
-COUNT(*) AS completed_events
-FROM event
-WHERE committee_id = ?
-AND CONCAT(event_date, ' ', event_time) <= NOW()
-";
-
-$stmt_completed = $conn->prepare($sql_completed);
-$stmt_completed->bind_param("i", $committee_id);
-$stmt_completed->execute();
-$result_completed = $stmt_completed->get_result();
-$completed_events = $result_completed->fetch_assoc()['completed_events'];
-?>
 <!doctype html>
 <html lang="en">
   <head>
@@ -77,7 +21,7 @@ $completed_events = $result_completed->fetch_assoc()['completed_events'];
     <script src="https://cdn.tailwindcss.com"></script>
 
     <!-- Custom Theme UMPSA -->
-    <link rel="stylesheet" href="committee.css" />
+    <link rel="stylesheet" href="assets/css/committee.css" />
 
     <style>
       body {
@@ -129,7 +73,7 @@ $completed_events = $result_completed->fetch_assoc()['completed_events'];
 
           <div>
             <p class="summary-label">Total Events</p>
-            <h3 class="summary-number" id="totalEvents"><?php echo $total_events ?></h3>
+            <h3 class="summary-number" id="totalEvents">0</h3>
           </div>
         </div>
 
@@ -141,7 +85,7 @@ $completed_events = $result_completed->fetch_assoc()['completed_events'];
 
           <div>
             <p class="summary-label">Upcoming Events</p>
-            <h3 class="summary-number" id="upcomingEvents"><?php echo $upcoming_events ?></h3>
+            <h3 class="summary-number" id="upcomingEvents">0</h3>
           </div>
         </div>
 
@@ -153,7 +97,7 @@ $completed_events = $result_completed->fetch_assoc()['completed_events'];
 
           <div>
             <p class="summary-label">Completed Events</p>
-            <h3 class="summary-number" id="completedEvents"><?php echo $completed_events ?></h3>
+            <h3 class="summary-number" id="completedEvents">0</h3>
           </div>
         </div>
       </div>
@@ -220,75 +164,7 @@ $completed_events = $result_completed->fetch_assoc()['completed_events'];
             </thead>
 
             <tbody id="eventTableBody">
-              <?php
-              $committee_id = $_SESSION['SESS_COMMITTEE_ID'];
-              $sql_events = "
-              SELECT 
-                  event_id,
-                  event_title,
-                  event_date,
-                  event_time,
-                  venue,
-                  max_participant,
-                  event_status
-              FROM event
-              WHERE committee_id = ?
-              ORDER BY event_date DESC
-              ";
-
-              $stmt_events = $conn->prepare($sql_events);
-              $stmt_events->bind_param("i", $committee_id);
-              $stmt_events->execute();
-              $result_events = $stmt_events->get_result();
-              while($event = $result_events->fetch_assoc()) :
-              ?>
-              <tr>
-                  <td>
-                      <?php echo htmlspecialchars($event['event_title']); ?>
-                  </td>
-                  <td>
-                      <?php echo date('d M Y', strtotime($event['event_date'])); ?>
-                  </td>
-                  <td>
-                      <?php echo date('h:i A', strtotime($event['event_time'])); ?>
-                  </td>
-                  <td>
-                      <?php echo htmlspecialchars($event['venue']); ?>
-                  </td>
-                  <td>
-                      <?php echo $event['max_participant']; ?>
-                  </td>
-                  <td>
-                      <?php if ($event['event_status'] == 'Upcoming') : ?>
-                          <span class="badge bg-primary">
-                              Upcoming
-                          </span>
-                      <?php elseif ($event['event_status'] == 'Completed') : ?>
-                          <span class="badge bg-success">
-                              Completed
-                          </span>
-                      <?php else : ?>
-                          <span class="badge bg-secondary">
-                              <?php echo htmlspecialchars($event['event_status']); ?>
-                          </span>
-                      <?php endif; ?>
-                  </td>
-                  <td>
-                      <a 
-                          href="viewEvent.php?event_id=<?php echo $event['event_id']; ?>"
-                          class="btn btn-sm btn-outline-primary"
-                      >
-                          View
-                      </a>
-                      <a 
-                          href="editEvent.php?event_id=<?php echo $event['event_id']; ?>"
-                          class="btn btn-sm btn-outline-warning"
-                      >
-                          Edit
-                      </a>
-                  </td>
-              </tr>
-              <?php endwhile; ?>
+              <!-- Event data will be loaded from localStorage using JavaScript -->
             </tbody>
           </table>
         </div>
@@ -301,7 +177,7 @@ $completed_events = $result_completed->fetch_assoc()['completed_events'];
     </main>
 
     <!-- Custom JavaScript -->
-    <script src="../assets/js/committee/manage_event.js?v=delete-message-fix-2"></script>
+    <script src="assets/js/committee/manage_event.js?v=delete-message-fix-2"></script>
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

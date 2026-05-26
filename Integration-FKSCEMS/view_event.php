@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>View Event - Student</title>
+    <title>View Event Details- Committee</title>
 
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -16,8 +16,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
 
     <!-- Custom Theme UMPSA -->
-    <link rel="stylesheet" href="committee.css">
-    <link rel="stylesheet" href="student.css?v=student-layout-1">
+    <link rel="stylesheet" href="assets/css/committee.css?v=committee-detail-1">
 
     <style>
         body {
@@ -48,7 +47,7 @@
 
 <body>
 
-    <?php include('studentHeader.php') ?>
+    <?php include('committeeHeader.php') ?>
 
     <main class="student-content">
         <div class="view-event-page">
@@ -135,18 +134,76 @@
                 </div>
 
                 <div class="view-event-actions">
-                    <a href="event_registration.html" class="view-event-back-btn">
+                    <a href="manage_events.php" class="view-event-back-btn">
                         <i class="bi bi-arrow-left"></i>
                         Back
                     </a>
                 </div>
 
             </section>
+
+            <section class="view-event-card participant-list-card">
+                <div class="participant-section-header">
+                    <div>
+                        <h2 class="participant-section-title">Participant List</h2>
+                        <p class="view-event-subtitle">Students who registered for this event.</p>
+                    </div>
+                    <span class="participant-count-pill" id="participantListCount">0 registered</span>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="event-table-custom">
+                        <thead>
+                            <tr>
+                                <th>No.</th>
+                                <th>Name</th>
+                                <th>Matric</th>
+                                <th>Course</th>
+                                <th>Email</th>
+                                <th>Attendance</th>
+                            </tr>
+                        </thead>
+                        <tbody id="participantTableBody">
+                            <tr>
+                                <td colspan="6" class="text-center py-4 text-muted">Loading participants...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="view-event-card participant-list-card">
+                <div class="participant-section-header">
+                    <div>
+                        <h2 class="participant-section-title">Waiting List</h2>
+                        <p class="view-event-subtitle">Students waiting for an available slot.</p>
+                    </div>
+                    <span class="participant-count-pill" id="waitingListCount">0 waiting</span>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="event-table-custom">
+                        <thead>
+                            <tr>
+                                <th>No.</th>
+                                <th>Name</th>
+                                <th>Matric</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="waitingTableBody">
+                            <tr>
+                                <td colspan="4" class="text-center py-4 text-muted">Loading waiting list...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
         </div>
     </main>
     <!-- Bootstrap 5 JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="../assets/js/student/view_event.js?v=student-crud-1"></script>
+    <script src="assets/js/committee/view_event.js?v=committee-detail-2"></script>
 
 </body>
 
