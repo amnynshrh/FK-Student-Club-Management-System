@@ -1,22 +1,23 @@
 <?php
+// 1. SESSION INITIALIZATION
 session_start();
 
-// 1. SESSION GUARD: Matches the keys used in your authentication logic
-if (!isset($_SESSION['SESS_ROLE']) || $_SESSION['SESS_ROLE'] !== 'Admin') {
+// 2. SESSION GUARD: Standardized to match login.php session keys
+if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'Admin') {
     header("Location: login.php");
     exit();
 }
 
-// 2. CACHE CONTROL
+// 3. CACHE CONTROL
 header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
 header("Cache-Control: post-check=0, pre-check=0", false);
 header("Pragma: no-cache");
 
-// 3. Database Connection
+// 4. DATABASE CONNECTION
 $servername = "localhost";
 $username = "root";
 $password = "";
-$dbname = "fk_scems_db"; // Using consistent DB name
+$dbname = "fk_scems_db"; 
 
 $conn = new mysqli($servername, $username, $password, $dbname);
 
@@ -67,7 +68,7 @@ $total_pending = $conn->query($pending_query)->fetch_assoc()['total'];
             <li><a href="logout.php" style="color: #dc3545; font-weight: bold;">Logout</a></li>
         </ul>
         <div class="admin-profile">
-            <span>FK Admin: <?php echo htmlspecialchars($_SESSION['SESS_USERNAME'] ?? 'Admin'); ?></span>
+            <span>FK Admin: <?php echo htmlspecialchars($_SESSION['username'] ?? 'Admin'); ?></span>
         </div>
     </div>
 </nav>
@@ -139,7 +140,6 @@ $total_pending = $conn->query($pending_query)->fetch_assoc()['total'];
                     <?php
                     $search = isset($_GET['search']) ? $conn->real_escape_string($_GET['search']) : '';
                     
-                    // JOINING user and student tables to get all info
                     $sql = "SELECT u.user_id, u.email, u.role, s.matric_number, s.name, s.status 
                             FROM user u 
                             LEFT JOIN student s ON u.user_id = s.user_id 
@@ -166,7 +166,7 @@ $total_pending = $conn->query($pending_query)->fetch_assoc()['total'];
                             echo "<td class='text-center'>
                                     <a href='editUser.php?id=$uid' class='action-btn edit'>Edit</a>
                                     <a href='deleteUser.php?id=$uid' class='action-btn delete' 
-                                       onclick='return confirm(\"Delete user: " . htmlspecialchars($row['name']) . "?\")'>Delete</a>
+                                       onclick='return confirm(\"Delete user: " . htmlspecialchars($row['name'] ?? 'This user') . "?\")'>Delete</a>
                                   </td>";
                             echo "</tr>";
                         }
