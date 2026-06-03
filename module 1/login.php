@@ -42,7 +42,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
             // INSTANT SERVER-SIDE REDIRECTION (No Popups)
             if ($user['role'] === 'Admin') {
-                header("Location: admin_dashboard.php");
+                header("Location: admin.php");
             } elseif ($user['role'] === 'Committee') {
                 header("Location: committeeDashboard.php");
             } else {
