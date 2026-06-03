@@ -123,9 +123,7 @@ $conn->close();
 
             <button type="submit" class="btn-submit">Sign In</button>
             
-            <div class="register-link">
-                Don't have an account? <a href="register.php">Register Here</a>
-            </div>
+            
         </form>
     </div>
 </div>
