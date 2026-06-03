@@ -22,7 +22,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $matric_id       = trim($_POST['matricNumber']);
     $full_name       = $_POST['name'];
     $email           = $_POST['email'];
-    $pass            = $_POST['password'];
+    
+    // ENCRYPTION/HASHING APPLIED HERE
+    // We take the plain text password and hash it securely using standard bcrypt
+    $plain_pass      = $_POST['password'];
+    $hashed_pass     = password_hash($plain_pass, PASSWORD_DEFAULT);
+    
     $contact         = $_POST['contactNo'];
     $role            = $_POST['role'];
     $course          = $_POST['course']; 
@@ -42,10 +47,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $conn->begin_transaction();
 
         try {
-            // A. Insert into 'user' table
+            // A. Insert into 'user' table (Binding the $hashed_pass instead of $plain_pass)
             $sql_user = "INSERT INTO user (username, email, password, role, contact_no) VALUES (?, ?, ?, ?, ?)";
             $stmt_user = $conn->prepare($sql_user);
-            $stmt_user->bind_param("sssss", $custom_username, $email, $pass, $role, $contact);
+            $stmt_user->bind_param("sssss", $custom_username, $email, $hashed_pass, $role, $contact);
             $stmt_user->execute();
             
             $new_user_id = $conn->insert_id;
@@ -58,7 +63,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
             $conn->commit();
 
-            // UPDATED: Success Popup redirects to membership.php
+            // Success Popup redirects to membership.php
             echo "<script>
                     alert('New member registered successfully!');
                     window.location.href='membership.php';
@@ -93,8 +98,6 @@ $conn->close();
         .input-group input, .input-group select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
         .btn-submit { width: 100%; padding: 12px; background: #004a99; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; margin-bottom: 10px; }
         .btn-submit:hover { background: #003366; }
-        
-        /* New Back Button Style */
         .btn-back { display: block; width: 100%; padding: 12px; background: #6c757d; color: white; text-decoration: none; text-align: center; border-radius: 5px; font-size: 16px; box-sizing: border-box; }
         .btn-back:hover { background: #5a6268; }
     </style>
