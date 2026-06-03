@@ -1,19 +1,19 @@
 <?php
+// 1. SESSION INITIALIZATION
 session_start();
 
-// 1. SECURITY: Prevent caching
+// SECURITY: Prevent caching
 header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
 header("Cache-Control: post-check=0, pre-check=0", false);
 header("Pragma: no-cache");
 
-// 2. CHECK LOGIN & ROLE: Only allow Students
-if (!isset($_SESSION['SESS_ROLE']) || $_SESSION['SESS_ROLE'] !== 'Student') {
+// 2. CHECK LOGIN & ROLE: Aligned to standard login.php session variables
+if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'Student') {
     header("Location: login.php");
     exit();
 }
 
 // 3. DATABASE CONNECTION
-// Ensure the database name matches what you used in register.php
 $servername = "localhost";
 $username = "root";
 $password = "";
@@ -25,11 +25,10 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error); 
 }
 
-// Get the unique User ID from the session (set in authenticate.php)
-$user_id = $_SESSION['SESS_USER_ID']; 
+// Map user tracking ID across from session states safely
+$user_id = $_SESSION['user_id']; 
 
-// 4. FETCH STUDENT & USER DATA (Joining both tables)
-// We get the Name from student and the Email from user
+// 4. FETCH STUDENT & USER DATA (Joining tables based on your schema)
 $sql_profile = "SELECT u.username, u.email, s.name, s.matric_number, s.course, s.profile_photo 
                 FROM user u 
                 JOIN student s ON u.user_id = s.user_id 
@@ -43,17 +42,14 @@ if ($stmt) {
     $result = $stmt->get_result();
     $user_data = $result->fetch_assoc();
 } else {
-    // This catches errors if the table names or columns don't match
     die("Profile Query Error: " . $conn->error);
 }
 
-// 5. FETCH CLUB COUNT (With a safety check if table exists)
+// 5. FETCH CLUB COUNT: Pointed to your real schema table 'membership'
 $club_count = 0;
-$table_check = $conn->query("SHOW TABLES LIKE 'club_members'");
-
-if ($table_check && $table_check->num_rows > 0) {
+if ($user_data) {
     $matric = $user_data['matric_number'];
-    $sql_clubs = "SELECT COUNT(*) as total FROM club_members WHERE matric_number = ?";
+    $sql_clubs = "SELECT COUNT(*) as total FROM membership WHERE matric_number = ? AND membership_status = 'Active'";
     $stmt_c = $conn->prepare($sql_clubs);
     if ($stmt_c) {
         $stmt_c->bind_param("s", $matric);
