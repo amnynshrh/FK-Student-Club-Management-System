@@ -1,22 +1,23 @@
 <?php
+// 1. SESSION INITIALIZATION
 session_start();
 
-// 1. SESSION GUARD: Matches the keys from authenticate.php
-if (!isset($_SESSION['SESS_ROLE']) || $_SESSION['SESS_ROLE'] !== 'Admin') {
+// 2. CHECK LOGIN & ROLE: Standardized to match login.php session keys
+if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'Admin') {
     header("Location: login.php");
     exit();
 }
 
-// 2. Prevent browser caching
+// 3. Prevent browser caching
 header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
 header("Cache-Control: post-check=0, pre-check=0", false);
 header("Pragma: no-cache");
 
-// 3. Database Connection
+// 4. Database Connection
 $servername = "localhost";
 $username = "root";
 $password = "";
-$dbname = "fk_scems_db"; // Updated to match your actual DB name
+$dbname = "fk_scems_db"; 
 
 $conn = new mysqli($servername, $username, $password, $dbname);
 
@@ -24,7 +25,7 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-// 4. Fetch Statistics
+// 5. Fetch Statistics
 // Total Students from user table
 $sql_students = "SELECT COUNT(*) as total FROM user WHERE role = 'Student'";
 $result_students = $conn->query($sql_students);
@@ -37,7 +38,7 @@ $sql_pending = "SELECT COUNT(*) as total FROM student WHERE status = 'Pending'";
 $result_pending = $conn->query($sql_pending);
 $total_pending = ($result_pending) ? $result_pending->fetch_assoc()['total'] : 0;
 
-// 5. Fetch Recent Registrations (Joining user and student for Names)
+// 6. Fetch Recent Registrations (Joining user and student for Names)
 $sql_recent = "SELECT u.username, u.email, u.role, s.name 
                FROM user u 
                LEFT JOIN student s ON u.user_id = s.user_id 
@@ -72,7 +73,7 @@ $recent_result = $conn->query($sql_recent);
             <li><a href="logout.php" style="color: #dc3545; font-weight: bold;">Logout</a></li>
         </ul>
         <div class="admin-profile">
-            <span>FK Admin: <?php echo htmlspecialchars($_SESSION['SESS_USERNAME'] ?? 'Administrator'); ?></span>
+            <span>FK Admin: <?php echo htmlspecialchars($_SESSION['username'] ?? 'Administrator'); ?></span>
         </div>
     </div>
 </nav>
