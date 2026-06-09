@@ -83,7 +83,7 @@ $conn->close();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register - FK Student Club</title>
-    <link rel="stylesheet" href="register.css">
+    <link rel="stylesheet" href="css/register.css">
     <style>
         .alert { padding: 12px; margin-bottom: 20px; border-radius: 8px; text-align: center; font-weight: 600; }
         .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
@@ -101,12 +101,10 @@ $conn->close();
 </head>
 <body>
 
-<?php include('adminHeader.php') ?>
-
 <div class="main-container" style="max-width: 600px; margin: 25px auto; background: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
     <div class="form-box">
         <div class="header" style="text-align: center; margin-bottom: 25px;">
-            <img src="assets/images/logo-fk.png" alt="Logo" class="logo" style="width: 80px;">
+            <img src="fk.png" alt="Logo" class="logo" style="width: 300px;">
             <h2>Register New Member</h2>
             <p>Admin Registration Management</p>
         </div>
