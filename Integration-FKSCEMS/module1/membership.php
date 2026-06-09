@@ -45,7 +45,7 @@ $total_pending = $conn->query($pending_query)->fetch_assoc()['total'];
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Membership Management - FK Student Club</title>
-    <link rel="stylesheet" href="membership.css">
+    <link rel="stylesheet" href="css/membership.css">
     <script>
         window.onpageshow = function(event) {
             if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
