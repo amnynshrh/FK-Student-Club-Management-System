@@ -68,7 +68,7 @@ $conn->close();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - FK Student Club</title>
-    <link rel="stylesheet" href="register.css">
+    <link rel="stylesheet" href="css/login.css">
     <style>
         /* Preserving your design framework styles exactly */
         .row { display: flex; gap: 15px; }
@@ -90,7 +90,7 @@ $conn->close();
 <div class="main-container" style="max-width: 450px; margin: 100px auto; background: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
     <div class="form-box">
         <div class="header" style="text-align: center; margin-bottom: 25px;">
-            <img src="assets/images/uploads/logo-fk.png" alt="Logo" class="logo" style="width: 80px;">
+            <img src="fk.png" alt="Logo" class="logo" style="width: 300px;">
             <h2>Member Login</h2>
             <p>FK SCEMS Portal Access</p>
         </div>
