@@ -3,165 +3,282 @@ session_start();
 
 $servername = "localhost";
 $username = "root";
-$password = "Amni102030.";
+$password = "";
 $dbname = "fk_scems_db";
 
 $conn = new mysqli($servername, $username, $password, $dbname);
 
-// Check connection
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-$club_name = $_GET['club_name'] ?? '';
-$semester = $_GET['semester'] ?? '';
-$event_name = $_GET['event_name'] ?? '';
+function h($value)
+{
+    return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
+}
 
-$sql_clubs = "
-SELECT club_name
-FROM club
-ORDER BY club_name ASC
-";
+function fetch_one($conn, $sql, $types = "", $params = [])
+{
+    $stmt = $conn->prepare($sql);
+    if (!$stmt) {
+        die("Query prepare failed: " . $conn->error);
+    }
+    if ($types !== "") {
+        $stmt->bind_param($types, ...$params);
+    }
+    $stmt->execute();
+    $result = $stmt->get_result();
+    return $result ? ($result->fetch_assoc() ?: []) : [];
+}
 
-$result_clubs = $conn->query($sql_clubs);
+function fetch_all($conn, $sql, $types = "", $params = [])
+{
+    $stmt = $conn->prepare($sql);
+    if (!$stmt) {
+        die("Query prepare failed: " . $conn->error);
+    }
+    if ($types !== "") {
+        $stmt->bind_param($types, ...$params);
+    }
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $rows = [];
+    while ($result && $row = $result->fetch_assoc()) {
+        $rows[] = $row;
+    }
+    return $rows;
+}
 
-$where_conditions = [];
+$club_name = trim($_GET['club_name'] ?? '');
+$month_year = trim($_GET['month_year'] ?? '');
+$event_name = trim($_GET['event_name'] ?? '');
+
+$clubs = fetch_all($conn, "SELECT club_name FROM club ORDER BY club_name ASC");
+$months = fetch_all(
+    $conn,
+    "SELECT DISTINCT DATE_FORMAT(event_date, '%Y-%m') AS month_value,
+            DATE_FORMAT(event_date, '%M (%Y)') AS month_label
+     FROM event
+     ORDER BY month_value DESC"
+);
+
+$filters = [];
 $params = [];
 $types = "";
 
-if (!empty($club_name)) {
-    $where_conditions[] = "c.club_name = ?";
+if ($club_name !== "") {
+    $filters[] = "c.club_name = ?";
     $params[] = $club_name;
     $types .= "s";
 }
 
-if (!empty($event_name)) {
-    $where_conditions[] = "e.event_title LIKE ?";
-    $params[] = "%$event_name%";
+if ($month_year !== "") {
+    $filters[] = "DATE_FORMAT(e.event_date, '%Y-%m') = ?";
+    $params[] = $month_year;
     $types .= "s";
 }
 
-$where_sql = "";
-
-if (!empty($where_conditions)) {
-    $where_sql = "WHERE " . implode(" AND ", $where_conditions);
+if ($event_name !== "") {
+    $filters[] = "e.event_title LIKE ?";
+    $params[] = "%" . $event_name . "%";
+    $types .= "s";
 }
 
-$sql_total_events = "
-SELECT COUNT(DISTINCT e.event_id) AS total_events
-FROM event e
-INNER JOIN club c
-ON e.club_id = c.club_id
-$where_sql
-";
+$where_sql = $filters ? "WHERE " . implode(" AND ", $filters) : "";
 
-$stmt_total_events = $conn->prepare($sql_total_events);
-if (!empty($params)) {
-    $stmt_total_events->bind_param($types, ...$params);
+$summary = fetch_one(
+    $conn,
+    "SELECT
+        COUNT(DISTINCT e.event_id) AS total_events,
+        COUNT(DISTINCT CASE WHEN er.registration_status = 'registered' THEN er.registration_id END) AS total_participants,
+        COALESCE(SUM(CASE WHEN er.registration_status = 'registered' THEN a.point_awarded ELSE 0 END), 0) AS total_points,
+        ROUND(
+            SUM(CASE WHEN er.registration_status = 'registered' AND LOWER(a.attendance_status) = 'present' THEN 1 ELSE 0 END)
+            / NULLIF(COUNT(DISTINCT CASE WHEN er.registration_status = 'registered' THEN er.registration_id END), 0) * 100,
+            2
+        ) AS attendance_rate
+     FROM event e
+     INNER JOIN club c ON e.club_id = c.club_id
+     LEFT JOIN eventregistration er ON e.event_id = er.event_id
+     LEFT JOIN attendance a ON er.registration_id = a.registration_id
+     $where_sql",
+    $types,
+    $params
+);
+
+$total_events = (int) ($summary['total_events'] ?? 0);
+$total_participants = (int) ($summary['total_participants'] ?? 0);
+$attendance_rate = ($summary['attendance_rate'] ?? null) !== null ? (float) $summary['attendance_rate'] : 0;
+$total_points = (int) ($summary['total_points'] ?? 0);
+
+$barLabels = [];
+$barData = [];
+$clubChartFilters = [];
+$clubChartParams = [];
+$clubChartTypes = "";
+
+if ($month_year !== "") {
+    $clubChartFilters[] = "DATE_FORMAT(e.event_date, '%Y-%m') = ?";
+    $clubChartParams[] = $month_year;
+    $clubChartTypes .= "s";
 }
-$stmt_total_events->execute();
-$result_total_events = $stmt_total_events->get_result();
-$total_events = $result_total_events->fetch_assoc()['total_events'] ?? 0;
 
-$sql_total_participants = "
-SELECT 
-COUNT(DISTINCT m.membership_id) AS total_participants
-FROM membership m
-INNER JOIN club c
-ON m.club_id = c.club_id
-LEFT JOIN event e
-ON c.club_id = e.club_id
-$where_sql
-";
-
-$stmt_total_participants = $conn->prepare($sql_total_participants);
-if (!empty($params)) {
-    $stmt_total_participants->bind_param($types, ...$params);
+if ($event_name !== "") {
+    $clubChartFilters[] = "e.event_title LIKE ?";
+    $clubChartParams[] = "%" . $event_name . "%";
+    $clubChartTypes .= "s";
 }
-$stmt_total_participants->execute();
-$result_total_participants = $stmt_total_participants->get_result();
-$total_participants = $result_total_participants->fetch_assoc()['total_participants'] ?? 0;
 
-$sql_avg_attendance = "
-SELECT ROUND((COUNT(a.attendance_id)/NULLIF(COUNT(er.registration_id), 0)) * 100, 2)
-AS attendance_rate
-FROM attendance a
-INNER JOIN eventregistration er
-ON a.registration_id = er.registration_id
-INNER JOIN event e
-ON er.event_id = e.event_id
-INNER JOIN club c
-ON e.club_id = c.club_id
-$where_sql
-";
+$clubChartWhere = $clubChartFilters ? "WHERE " . implode(" AND ", $clubChartFilters) : "";
+$clubAttendanceRows = fetch_all(
+    $conn,
+    "SELECT c.club_name,
+        ROUND(
+            SUM(CASE WHEN er.registration_status = 'registered' AND LOWER(a.attendance_status) = 'present' THEN 1 ELSE 0 END)
+            / NULLIF(COUNT(DISTINCT CASE WHEN er.registration_status = 'registered' THEN er.registration_id END), 0) * 100,
+            2
+        ) AS attendance_rate
+     FROM club c
+     LEFT JOIN event e ON c.club_id = e.club_id
+     LEFT JOIN eventregistration er ON e.event_id = er.event_id
+     LEFT JOIN attendance a ON er.registration_id = a.registration_id
+     $clubChartWhere
+     GROUP BY c.club_id, c.club_name
+     ORDER BY attendance_rate DESC, c.club_name ASC",
+    $clubChartTypes,
+    $clubChartParams
+);
 
-$stmt_avg_attendance = $conn->prepare($sql_avg_attendance);
-if (!empty($params)) {
-    $stmt_avg_attendance->bind_param($types, ...$params);
+foreach ($clubAttendanceRows as $row) {
+    $barLabels[] = $row['club_name'];
+    $barData[] = $row['attendance_rate'] !== null ? (float) $row['attendance_rate'] : 0;
 }
-$stmt_avg_attendance->execute();
-$result_avg_attendance = $stmt_avg_attendance->get_result();
-$attendance_rate = $result_avg_attendance->fetch_assoc()['attendance_rate'] ?? 0;
 
-$sql_total_points = "
-SELECT SUM(a.point_awarded) AS total_points
-FROM attendance a
-INNER JOIN eventregistration er
-ON a.registration_id = er.registration_id
-INNER JOIN event e
-ON er.event_id = e.event_id
-INNER JOIN club c
-ON e.club_id = c.club_id
-$where_sql
-";
+$eventLabels = [];
+$eventData = [];
 
-$stmt_total_points = $conn->prepare($sql_total_points);
-if (!empty($params)) {
-    $stmt_total_points->bind_param($types, ...$params);
+if ($club_name !== "") {
+    $eventRows = fetch_all(
+        $conn,
+        "SELECT e.event_title,
+            COUNT(DISTINCT CASE WHEN er.registration_status = 'registered' THEN er.registration_id END) AS total_participants
+         FROM event e
+         INNER JOIN club c ON e.club_id = c.club_id
+         LEFT JOIN eventregistration er ON e.event_id = er.event_id
+         $where_sql
+         GROUP BY e.event_id, e.event_title
+         ORDER BY total_participants DESC, e.event_title ASC",
+        $types,
+        $params
+    );
+
+    foreach ($eventRows as $row) {
+        $eventLabels[] = $row['event_title'];
+        $eventData[] = (int) $row['total_participants'];
+    }
 }
-$stmt_total_points->execute();
-$result_total_points = $stmt_total_points->get_result();
-$total_points = $result_total_points->fetch_assoc()['total_points'] ?? 0;
 
-if (empty($club_name)) {
-    $sql_top_club = "
-    SELECT c.club_name,
-    COUNT(DISTINCT e.event_id) AS total_events,
-    COUNT(DISTINCT er.registration_id) AS total_participants,
-    COALESCE(SUM(a.point_awarded), 0) AS total_points
-    FROM club c
-    LEFT JOIN event e
-    ON c.club_id = e.club_id
-    LEFT JOIN eventregistration er
-    ON e.event_id = er.event_id
-    LEFT JOIN attendance a
-    ON er.registration_id = a.registration_id
-    GROUP BY c.club_id, c.club_name
-    ORDER BY total_points DESC
-    LIMIT 3
-    ";
+$statusRows = fetch_all(
+    $conn,
+    "SELECT
+        CASE
+            WHEN a.attendance_id IS NULL THEN 'Not Marked'
+            ELSE CONCAT(UCASE(LEFT(a.attendance_status, 1)), SUBSTRING(a.attendance_status, 2))
+        END AS attendance_status,
+        COUNT(DISTINCT er.registration_id) AS total
+     FROM event e
+     INNER JOIN club c ON e.club_id = c.club_id
+     INNER JOIN eventregistration er ON e.event_id = er.event_id AND er.registration_status = 'registered'
+     LEFT JOIN attendance a ON er.registration_id = a.registration_id
+     $where_sql
+     GROUP BY attendance_status
+     ORDER BY total DESC",
+    $types,
+    $params
+);
 
-    $result_top_club = $conn->query($sql_top_club);
+$donutLabels = [];
+$donutData = [];
+foreach ($statusRows as $row) {
+    $donutLabels[] = $row['attendance_status'];
+    $donutData[] = (int) $row['total'];
 }
-else {
-    $sql_committee = "
-    SELECT s.name, cm.position
-    FROM committee cm
-    INNER JOIN membership m
-    ON cm.membership_id = m.membership_id
-    INNER JOIN student s
-    ON m.matric_number = s.matric_number
-    INNER JOIN club c
-    ON cm.club_id = c.club_id
-    WHERE c.club_name = ?
-    ORDER BY cm.position ASC
-    ";
 
-    $stmt_committee = $conn->prepare($sql_committee);
-    $stmt_committee->bind_param("s", $club_name);
-    $stmt_committee->execute();
-    $result_committee = $stmt_committee->get_result();
+$trendRows = fetch_all(
+    $conn,
+    "SELECT DATE_FORMAT(e.event_date, '%Y-%m') AS month_value,
+            DATE_FORMAT(e.event_date, '%b %Y') AS month_label,
+            COUNT(DISTINCT er.registration_id) AS registered_total
+     FROM event e
+     INNER JOIN club c ON e.club_id = c.club_id
+     INNER JOIN eventregistration er ON e.event_id = er.event_id AND er.registration_status = 'registered'
+     $where_sql
+     GROUP BY month_value, month_label
+     ORDER BY month_value ASC",
+    $types,
+    $params
+);
+
+$lineLabels = [];
+$lineData = [];
+foreach ($trendRows as $row) {
+    $lineLabels[] = $row['month_label'];
+    $lineData[] = (int) $row['registered_total'];
 }
+
+$topStudents = fetch_all(
+    $conn,
+    "SELECT s.matric_number, s.name, s.course,
+            COALESCE(SUM(a.point_awarded), 0) AS total_points
+     FROM student s
+     INNER JOIN eventregistration er ON s.matric_number = er.matric_number AND er.registration_status = 'registered'
+     INNER JOIN event e ON er.event_id = e.event_id
+     INNER JOIN club c ON e.club_id = c.club_id
+     LEFT JOIN attendance a ON er.registration_id = a.registration_id
+     $where_sql
+     GROUP BY s.matric_number, s.name, s.course
+     ORDER BY total_points DESC, s.name ASC
+     LIMIT 5",
+    $types,
+    $params
+);
+
+if ($club_name === "") {
+    $topClubs = fetch_all(
+        $conn,
+        "SELECT c.club_name,
+            COUNT(DISTINCT e.event_id) AS total_events,
+            COUNT(DISTINCT CASE WHEN er.registration_status = 'registered' THEN er.registration_id END) AS total_participants,
+            COALESCE(SUM(CASE WHEN er.registration_status = 'registered' THEN a.point_awarded ELSE 0 END), 0) AS total_points
+         FROM club c
+         LEFT JOIN event e ON c.club_id = e.club_id
+         LEFT JOIN eventregistration er ON e.event_id = er.event_id
+         LEFT JOIN attendance a ON er.registration_id = a.registration_id
+         $clubChartWhere
+         GROUP BY c.club_id, c.club_name
+         ORDER BY total_points DESC, total_participants DESC, c.club_name ASC
+         LIMIT 3",
+        $clubChartTypes,
+        $clubChartParams
+    );
+    $committeeRows = [];
+} else {
+    $topClubs = [];
+    $committeeRows = fetch_all(
+        $conn,
+        "SELECT s.name, cm.position
+         FROM committee cm
+         INNER JOIN membership m ON cm.membership_id = m.membership_id
+         INNER JOIN student s ON m.matric_number = s.matric_number
+         INNER JOIN club c ON cm.club_id = c.club_id
+         WHERE c.club_name = ?
+         ORDER BY FIELD(cm.position, 'President', 'Vice President', 'Secretary', 'Treasurer'), cm.position ASC, s.name ASC",
+        "s",
+        [$club_name]
+    );
+}
+
+$activeFilterCount = ($club_name !== "" ? 1 : 0) + ($month_year !== "" ? 1 : 0) + ($event_name !== "" ? 1 : 0);
 ?>
 
 <!DOCTYPE html>
@@ -169,312 +286,212 @@ else {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard</title>
+    <title>Attendance Dashboard</title>
     <link rel="stylesheet" href="attendance_dashboard.css">
 </head>
 <body>
-    <?php include ('adminHeader.php'); ?>
+    <?php include('adminHeader.php'); ?>
     <div class="page-container">
+        <header class="page-header">
+            <div>
+                <h2>Participation & Attendance Dashboard</h1>
+            </div>
+            <div class="header-actions">
+                <span class="filter-pill"><?php echo $activeFilterCount; ?> active filter<?php echo $activeFilterCount === 1 ? '' : 's'; ?></span>
+                <a class="reset-link" href="attendance_dashboard.php">Reset</a>
+            </div>
+        </header>
+
         <div class="dashboard-filter-container">
-            <form method="GET" class="dashboard-filter-form">
+            <form method="GET" class="dashboard-filter-form" id="dashboardFilterForm">
                 <div class="filter-group">
-                    <label>Club Name</label>
+                    <label for="club_name">Club Name</label>
                     <input
+                        id="club_name"
                         type="search"
                         name="club_name"
                         list="club-list"
                         placeholder="Search club..."
-                        value="<?php echo htmlspecialchars($club_name); ?>"
+                        value="<?php echo h($club_name); ?>"
                     >
                     <datalist id="club-list">
-                        <?php while($club = $result_clubs->fetch_assoc()) : ?>
-                            <option value="<?php echo htmlspecialchars($club['club_name']); ?>">
-                        <?php endwhile; ?>
+                        <?php foreach ($clubs as $club) : ?>
+                            <option value="<?php echo h($club['club_name']); ?>">
+                        <?php endforeach; ?>
                     </datalist>
                 </div>
                 <div class="filter-group">
-                    <label>Semester</label>
-                    <select name="semester">
-                        <option value="">All Semesters</option>
-                        <option value="Semester 1">Semester 1</option>
-                        <option value="Semester 2">Semester 2</option>
+                    <label for="month_year">Month (Year)</label>
+                    <select id="month_year" name="month_year">
+                        <option value="">All Months</option>
+                        <?php foreach ($months as $month) : ?>
+                            <option value="<?php echo h($month['month_value']); ?>" <?php echo $month_year === $month['month_value'] ? 'selected' : ''; ?>>
+                                <?php echo h($month['month_label']); ?>
+                            </option>
+                        <?php endforeach; ?>
                     </select>
                 </div>
                 <div class="filter-group">
-                    <label>Event Name</label>
+                    <label for="event_name">Event Name</label>
                     <input
+                        id="event_name"
                         type="search"
                         name="event_name"
                         placeholder="Search event..."
-                        value="<?php echo htmlspecialchars($event_name); ?>"
+                        value="<?php echo h($event_name); ?>"
                     >
                 </div>
                 <div class="filter-button-group">
-                    <button type="submit" class="search-btn">
-                        Filter Dashboard
-                    </button>
+                    <button type="submit" class="search-btn">Filter Dashboard</button>
                 </div>
             </form>
         </div>
-        <header class="page-header">
-            <h1>Participation & Attendance Dashboard</h1>
-            <p>wait</p>
-        </header>
-    
-        <div class="metrics-container">
-            <div class="metric-card">
+
+        <section class="metrics-container" aria-label="Dashboard summary">
+            <div class="metric-card accent-blue">
                 <div class="metric-info">
-                    <span class="metric-label">TOTAL EVENTS</span>
+                    <span class="metric-label">Total Events</span>
                     <h3 class="metric-value"><?php echo number_format($total_events); ?></h3>
                 </div>
             </div>
-            <div class="metric-card">
+            <div class="metric-card accent-green">
                 <div class="metric-info">
-                    <span class="metric-label">TOTAL PARTICIPANTS</span>
-                    <h3 class="metric-value"><?php echo $total_participants; ?></h3>
+                    <span class="metric-label">Registered Participants</span>
+                    <h3 class="metric-value"><?php echo number_format($total_participants); ?></h3>
                 </div>
-                <div class="metric-icon-box blue-icon">🏘️</div>
             </div>
-            <div class="metric-card">
+            <div class="metric-card accent-red">
                 <div class="metric-info">
-                    <span class="metric-label">AVERAGE ATTENDANCE RATE</span>
-                    <h3 class="metric-value" style="color: #dc3545;"><?php echo $attendance_rate; ?></h3>
+                    <span class="metric-label">Average Attendance Rate</span>
+                    <h3 class="metric-value"><?php echo number_format($attendance_rate, 2); ?>%</h3>
                 </div>
-                <div class="metric-icon-box red-icon">⚠️</div>
             </div>
-            <div class="metric-card">
+            <div class="metric-card accent-gold">
                 <div class="metric-info">
-                    <span class="metric-label">TOTAL POINTS DISTRIBUTED</span>
-                    <h3 class="metric-value" style="color: #dc3545;"><?php echo $total_points; ?></h3>
+                    <span class="metric-label">Total Points Distributed</span>
+                    <h3 class="metric-value"><?php echo number_format($total_points); ?></h3>
                 </div>
-                <div class="metric-icon-box red-icon">⚠️</div>
             </div>
-        </div>
-        <div class="chart-container">
-            <?php
-            $barLabels = [];
-            $barData = [];
+        </section>
 
-            $sql = "
-            SELECT c.club_name,
-            ROUND((
-            SUM(CASE 
-            WHEN a.attendance_status = 'Present'
-            THEN 1
-            ELSE 0
-            END)/NULLIF(COUNT(er.registration_id), 0)) * 100, 2)
-            AS attendance_rate
-            FROM club c
-            LEFT JOIN event e
-            ON c.club_id = e.club_id
-            LEFT JOIN eventregistration er
-            ON e.event_id = er.event_id
-            LEFT JOIN attendance a
-            ON er.registration_id = a.registration_id
-            GROUP BY c.club_id, c.club_name
-            ORDER BY attendance_rate DESC
-            ";
-
-            $result = $conn->query($sql);
-            while($row = $result->fetch_assoc()) {
-                $barLabels[] = $row['club_name'];
-                $barData[] = $row['attendance_rate'];
-            }
-
-            $eventLabels = [];
-            $eventData = [];
-
-            if (!empty($club_name)) {
-                $sql_events = "
-                SELECT e.event_title,
-                COUNT(er.registration_id) AS total_participants
-                FROM event e
-                LEFT JOIN eventregistration er
-                ON e.event_id = er.event_id
-                INNER JOIN club c
-                ON e.club_id = c.club_id
-                WHERE c.club_name = ?
-                GROUP BY e.event_id, e.event_title
-                ORDER BY total_participants DESC
-                ";
-
-                $stmt_events = $conn->prepare($sql_events);
-                $stmt_events->bind_param("s", $club_name);
-                $stmt_events->execute();
-                $result_events = $stmt_events->get_result();
-                while($row = $result_events->fetch_assoc()) {
-                    $eventLabels[] = $row['event_title'];
-                    $eventData[] = $row['total_participants'];
-                }
-            }
-            ?>
-            <div class="bar-chart">
-                <?php if (empty($club_name)) : ?>
-                    <span class="metric-label">
-                        CLUB ATTENDANCE RATE
-                    </span>
-                    <div class="bar-div">
+        <section class="chart-container">
+            <div class="dashboard-panel chart-panel wide-panel">
+                <div class="panel-header">
+                    <div>
+                        <span class="metric-label"><?php echo $club_name === "" ? "Club Attendance Rate" : "Events by " . h($club_name); ?></span>
+                        <p><?php echo $club_name === "" ? "Click a club bar to filter the dashboard." : "Registered participants by event."; ?></p>
+                    </div>
+                </div>
+                <div class="bar-div">
+                    <?php if ($club_name === "") : ?>
                         <canvas id="barChart"></canvas>
-                    </div>
-                <?php else : ?>
-                    <span class="metric-label">
-                        EVENTS BY <?php echo htmlspecialchars(strtoupper($club_name)); ?>
-                    </span>
-                    <div class="bar-div">
+                    <?php else : ?>
                         <canvas id="eventChart"></canvas>
-                    </div>
-                <?php endif; ?>
+                    <?php endif; ?>
+                </div>
             </div>
-            <?php
-            $donutLabels = [];
-            $donutData = [];
-            $sql = "
-            SELECT a.attendance_status,
-            COUNT(*) AS total
-            FROM attendance a
-            INNER JOIN eventregistration er
-            ON a.registration_id = er.registration_id
-            INNER JOIN event e
-            ON er.event_id = e.event_id
-            INNER JOIN club c
-            ON e.club_id = c.club_id
-            $where_sql
-            GROUP BY a.attendance_status
-            ";
 
-            $stmt_donut = $conn->prepare($sql);
-            if (!empty($params)) {
-                $stmt_donut->bind_param($types, ...$params);
-            }
-            $stmt_donut->execute();
-            $result = $stmt_donut->get_result();
-            while($row = $result->fetch_assoc()) {
-                $donutLabels[] = $row['attendance_status'];
-                $donutData[] = $row['total'];
-            }
-            ?>
-            <div class="donut-chart">
-                <div class="metric-info">
-                    <span class="metric-label">PARTICIPATION STATUS</span>
+            <div class="dashboard-panel chart-panel status-panel">
+                <div class="panel-header">
+                    <div>
+                        <span class="metric-label">Attendance Status</span>
+                    </div>
+                </div>
+                <div class="donut-wrap">
                     <canvas id="donutChart"></canvas>
                 </div>
             </div>
-        </div>
-        <div class="bottom-container">
-            <?php
-            
-            $lineLabels = [];
-            $lineData = [];
+        </section>
 
-            $sql = "SELECT name FROM student";
-            $result = $conn->query($sql);
-
-            while($row = $result->fetch_assoc()) {
-                // $barLabels[] = $row['name'];
-                $lineLabels[] = "akmal";
-                $lineData[] = 10;
-                // $row['attendance_rate'];
-            }
-            
-            $sql_top_active = "SELECT s.matric_number, s.name, s.course,
-            SUM(a.point_awarded) AS total_points
-            FROM student s
-            INNER JOIN eventregistration er
-            ON s.matric_number = er.matric_number
-            INNER JOIN attendance a
-            ON er.registration_id = a.registration_id
-            GROUP BY
-            s.matric_number, s.name, s.course
-            ORDER BY total_points DESC
-            LIMIT 5;";
-
-            $result_top_active = $conn->query($sql_top_active);
-
-            ?>
-            <div class="bar-chart">
-                <span class="metric-label">ja RATE</span>
+        <section class="bottom-container">
+            <div class="dashboard-panel chart-panel wide-panel">
+                <div class="panel-header">
+                    <div>
+                        <span class="metric-label">Monthly Participation Trends</span>
+                    </div>
+                </div>
                 <div class="bar-div">
                     <canvas id="lineChart"></canvas>
                 </div>
             </div>
-            <div class="metric-card">
-                <span class="metric-label">
-                    TOP ACTIVE STUDENT
-                </span>
-                <div class="top-students-container">
-                <?php while($row = $result_top_active->fetch_assoc()) : ?>
-                <div class="metric-card">
-                    <div class="metric-info">
-                        <h3 class="metric-value">
-                            <?php echo htmlspecialchars($row['name']); ?>
-                        </h3>
-                        <p class="metric-points">
-                            <?php echo number_format($row['total_points']); ?> Points
-                        </p>
+
+            <div class="dashboard-panel list-panel">
+                <div class="panel-header">
+                    <div>
+                        <span class="metric-label">Top Active Students</span>
                     </div>
                 </div>
-                <?php endwhile; ?>
+                <div class="stack-list">
+                    <?php if ($topStudents) : ?>
+                        <?php foreach ($topStudents as $index => $row) : ?>
+                            <div class="rank-row">
+                                <span class="rank-number"><?php echo $index + 1; ?></span>
+                                <div>
+                                    <h3><?php echo h($row['name']); ?></h3>
+                                    <p><?php echo h($row['course']); ?></p>
+                                </div>
+                                <strong><?php echo number_format((int) $row['total_points']); ?> pts</strong>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php else : ?>
+                        <p class="empty-state">No student points found for the current filters.</p>
+                    <?php endif; ?>
                 </div>
             </div>
-            <div class="metric-card">
-                <div class="metric-info">
-                    <?php if (empty($club_name)) : ?>
-                        <span class="metric-label">
-                            TOP ACTIVE CLUBS
-                        </span>
-                        <div class="top-students-container">
-                            <?php while($club = $result_top_club->fetch_assoc()) : ?>
-                                <div class="metric-card">
-                                    <div class="metric-info">
-                                        <h3 class="metric-value">
-                                            <?php echo htmlspecialchars($club['club_name']); ?>
-                                        </h3>
-                                        <p class="metric-points">
-                                            <?php echo $club['total_points']; ?> Points
-                                        </p>
-                                        <p class="metric-points">
-                                            <?php echo $club['total_events']; ?> Events
-                                        </p>
+
+            <div class="dashboard-panel list-panel">
+                <div class="panel-header">
+                    <div>
+                        <span class="metric-label"><?php echo $club_name === "" ? "Top Active Clubs" : "Club Committee Members"; ?></span>
+                    </div>
+                </div>
+                <div class="stack-list">
+                    <?php if ($club_name === "") : ?>
+                        <?php if ($topClubs) : ?>
+                            <?php foreach ($topClubs as $index => $club) : ?>
+                                <button type="button" class="rank-row clickable-row" data-club="<?php echo h($club['club_name']); ?>">
+                                    <span class="rank-number"><?php echo $index + 1; ?></span>
+                                    <div>
+                                        <h3><?php echo h($club['club_name']); ?></h3>
+                                        <p><?php echo number_format((int) $club['total_events']); ?> events, <?php echo number_format((int) $club['total_participants']); ?> participants</p>
+                                    </div>
+                                    <strong><?php echo number_format((int) $club['total_points']); ?> pts</strong>
+                                </button>
+                            <?php endforeach; ?>
+                        <?php else : ?>
+                            <p class="empty-state">No club activity found.</p>
+                        <?php endif; ?>
+                    <?php else : ?>
+                        <?php if ($committeeRows) : ?>
+                            <?php foreach ($committeeRows as $committee) : ?>
+                                <div class="rank-row">
+                                    <span class="rank-number">-</span>
+                                    <div>
+                                        <h3><?php echo h($committee['name']); ?></h3>
+                                        <p><?php echo h($committee['position']); ?></p>
                                     </div>
                                 </div>
-                            <?php endwhile; ?>
-                        </div>
-                            <?php else : ?>
-                                <span class="metric-label">
-                                    CLUB COMMITTEE MEMBERS
-                                </span>
-                                <div class="top-students-container">
-                                    <?php while($committee = $result_committee->fetch_assoc()) : ?>
-                                        <div class="metric-card">
-                                            <div class="metric-info">
-                                                <h3 class="metric-value">
-                                                    <?php echo htmlspecialchars($committee['name']); ?>
-                                                </h3>
-                                                <p class="metric-points">
-                                                    <?php echo htmlspecialchars($committee['position']); ?>
-                                                </p>
-                                            </div>
-                                        </div>
-                                    <?php endwhile; ?>
-                                </div>
-                            <?php endif; ?>
-                        </div>
-                    </div>
+                            <?php endforeach; ?>
+                        <?php else : ?>
+                            <p class="empty-state">No committee members found for this club.</p>
+                        <?php endif; ?>
+                    <?php endif; ?>
                 </div>
             </div>
+        </section>
+    </div>
+
     <script>
         const barChartLabels = <?php echo json_encode($barLabels); ?>;
         const barChartData = <?php echo json_encode($barData); ?>;
-        
         const donutChartLabels = <?php echo json_encode($donutLabels); ?>;
         const donutChartData = <?php echo json_encode($donutData); ?>;
-
         const eventChartLabels = <?php echo json_encode($eventLabels); ?>;
         const eventChartData = <?php echo json_encode($eventData); ?>;
-
         const lineChartLabels = <?php echo json_encode($lineLabels); ?>;
         const lineChartData = <?php echo json_encode($lineData); ?>;
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> //Chart.js API
     <script src="charts.js"></script>
 </body>
+</html>
