@@ -37,7 +37,7 @@ if (isset($_GET['error']) && $_GET['error'] == '1') {
     <div class="form-box">
         <div class="header" style="text-align: center; margin-bottom: 25px;">
             <img src="fk.png" alt="Logo" class="logo" style="width: 250px;">
-            <h2>Welcome to Student Club Management System</h2>   
+            <h2>Welcome to Student Club & Event Management System</h2>   
         </div>
 
         <?php if (!empty($error_msg)): ?>
