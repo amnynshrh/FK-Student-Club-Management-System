@@ -39,13 +39,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             if ($input_role === $db_role) {
                 // Scenario A: Exact match (Student logs in as Student, Committee logs in as Committee, etc.)
                 $access_granted = true;
-            } elseif ($db_role === 'committee' && $input_role === 'student') {
+            } elseif ($db_role === 'Committee' && $input_role === 'Student') {
                 // Scenario B: Dual-role authorization bypass
                 // Database says they are a Committee member, but they selected "Student" in the form.
                 $access_granted = true;
                 
                 // Override the role variable so they get treated as a Student for this session
-                $db_role = 'student'; 
+                $db_role = 'Student'; 
             }
 
             if ($access_granted) {
