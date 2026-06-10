@@ -15,7 +15,7 @@ if (isset($_GET['error']) && $_GET['error'] == '1') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - FK Student Club</title>
-    <link rel="stylesheet" href="loginRegister.css">
+    <link rel="stylesheet" href="register.css">
     <style>
         .row { display: flex; gap: 15px; }
         .input-group { margin-bottom: 15px; }
