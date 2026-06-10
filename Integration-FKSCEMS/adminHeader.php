@@ -34,10 +34,7 @@ if ($admin_name === '') {
                 class="nav-logo"
                 width="200"
             >
-            <div class="nav-brand">
-                FK Student Club &<br>
-                Event Management System
-            </div>
+            
         </div>
         <ul class="menu-links">
             <li>
@@ -145,8 +142,7 @@ if ($admin_name === '') {
         </ul>
         <div class="admin-profile">
             <span>
-                Admin:
-                <?php echo htmlspecialchars($admin_name); ?>
+                Admin: <?php echo htmlspecialchars($admin_name); ?>      
             </span>
         </div>
     </div>

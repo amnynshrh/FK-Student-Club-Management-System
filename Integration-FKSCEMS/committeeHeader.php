@@ -41,10 +41,7 @@ $manage_active = in_array($current_page, $manage_pages, true) ? 'active' : '';
                 width="200"
                 alt="FK Logo"
                 class="nav-logo">
-            <div class="nav-brand">
-                FK Student Club &<br>
-                Management System
-            </div>
+            
         </div>
         <ul class="menu-links">
             <li>
