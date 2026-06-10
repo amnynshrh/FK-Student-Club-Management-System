@@ -25,8 +25,7 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-// 5. Fetch Statistics
-// Total Students from user table
+//total committees, students, admins from user table
 $sql_committees = "SELECT COUNT(*) as total FROM user WHERE role = 'Committee'";
 $result_committees = $conn->query($sql_committees);
 $total_committees = ($result_committees) ? $result_committees->fetch_assoc()['total'] : 0;
@@ -39,7 +38,10 @@ $sql_admins = "SELECT COUNT(*) as total FROM user WHERE role = 'Admin'";
 $result_admins = $conn->query($sql_admins);
 $total_admins = ($result_admins) ? $result_admins->fetch_assoc()['total'] : 0;
 
-$total_clubs = 309; // Hardcoded for now
+//total clubs from user table
+$sql_clubs = "SELECT COUNT(*) as total FROM user WHERE role = 'Club'";
+$result_clubs = $conn->query($sql_clubs);
+$total_clubs = ($result_clubs) ? $result_clubs->fetch_assoc()['total'] : 0;
 
 // Pending Registrations (logic based on user table status)
 $sql_pending = "SELECT COUNT(*) as total FROM student WHERE status = 'Pending'";
@@ -88,7 +90,7 @@ $recent_result = $conn->query($sql_recent);
         </div>
         <div class="metric-card">
             <div class="metric-info">
-                <span class="metric-label">TOTAL ACTIVE CLUBS</span>
+                <span class="metric-label">TOTAL CLUBS</span>
                 <h3 class="metric-value"><?php echo $total_clubs; ?></h3>
             </div>
             <div class="metric-icon-box blue-icon">🏘️</div>
