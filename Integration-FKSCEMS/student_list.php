@@ -6,7 +6,7 @@ include 'session.php';
 // 2. Database Connection
 $servername = "localhost";
 $username = "root";
-$password = "";
+$password = "Amni102030.";
 $dbname = "fk_scems_db";
 
 $conn = new mysqli($servername, $username, $password, $dbname);

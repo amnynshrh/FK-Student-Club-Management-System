@@ -29,7 +29,6 @@ $sql = "
     SELECT
         er.`registration_id`,
         er.`registration_status`,
-        er.`confirmation_status`,
         e.`event_id`,
         e.`event_title`,
         e.`event_date`,
@@ -79,7 +78,6 @@ while ($row = mysqli_fetch_assoc($result)) {
     $history[] = [
         "registrationId" => $row["registration_id"],
         "registrationStatus" => $row["registration_status"],
-        "confirmationStatus" => $row["confirmation_status"],
         "eventId" => $row["event_id"],
         "title" => $row["event_title"],
         "date" => $row["event_date"],

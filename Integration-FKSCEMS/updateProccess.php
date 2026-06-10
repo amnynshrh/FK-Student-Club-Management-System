@@ -6,7 +6,7 @@ if (!isset($_SESSION['SESS_USER_ID'])) {
     exit();
 }
 
-$conn = new mysqli("localhost", "root", "", "fk_scems_db");
+require_once 'config/db.php';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $user_id = $_SESSION['SESS_USER_ID'];
@@ -28,7 +28,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $target_dir = "assets/images/uploads/";
             $file_ext = pathinfo($_FILES["profilePhoto"]["name"], PATHINFO_EXTENSION);
             $file_name = $user_id . "_" . time() . "." . $file_ext;
-            
+
             if (move_uploaded_file($_FILES["profilePhoto"]["tmp_name"], $target_dir . $file_name)) {
                 $sql2 = "UPDATE student SET name = ?, profile_photo = ? WHERE user_id = ?";
                 $stmt2 = $conn->prepare($sql2);
@@ -52,11 +52,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 alert('Profile updated successfully!');
                 window.location.href='$goto';
               </script>";
-
     } catch (Exception $e) {
         $conn->rollback();
         echo "<script>alert('Error: " . $e->getMessage() . "'); window.history.back();</script>";
     }
 }
 $conn->close();
-?>

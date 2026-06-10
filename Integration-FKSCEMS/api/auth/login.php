@@ -62,6 +62,25 @@ if (mysqli_num_rows($result) === 1) {
             $_SESSION['SESS_USERNAME'] = $row['username'];
             $_SESSION['SESS_ROLE'] = $role;
 
+            if ($role === 'committee') {
+                $committeeSql = "
+                    SELECT c.committee_id
+                    FROM student s
+                    INNER JOIN membership m ON s.matric_number = m.matric_number
+                    INNER JOIN committee c ON m.membership_id = c.membership_id
+                    WHERE s.user_id = ?
+                    LIMIT 1
+                ";
+                $committeeStmt = mysqli_prepare($conn, $committeeSql);
+                mysqli_stmt_bind_param($committeeStmt, "i", $row['user_id']);
+                mysqli_stmt_execute($committeeStmt);
+                $committeeResult = mysqli_stmt_get_result($committeeStmt);
+                if ($committeeResult && mysqli_num_rows($committeeResult) > 0) {
+                    $committeeData = mysqli_fetch_assoc($committeeResult);
+                    $_SESSION['SESS_COMMITTEE_ID'] = $committeeData['committee_id'];
+                }
+            }
+
             if ($role === 'admin') {
                 header("Location: ../../admin/home.php");
             } else if ($role === 'student') {

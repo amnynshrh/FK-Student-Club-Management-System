@@ -2,7 +2,7 @@
 session_start();
 
 // 1. Database connection
-$conn = new mysqli("localhost", "root", "", "fk_scems_db");
+$conn = new mysqli("localhost", "root", "Amni102030.", "fk_scems_db");
 
 if ($_SERVER["REQUEST_METHOD"] !== "POST") {
     header("Location: login.php");

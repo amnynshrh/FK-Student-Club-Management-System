@@ -3,7 +3,7 @@ session_start();
 
 $servername = "localhost";
 $username = "root";
-$password = "";
+$password = "Amni102030.";
 $dbname = "fk_scems_db";
 
 $conn = new mysqli($servername, $username, $password, $dbname);

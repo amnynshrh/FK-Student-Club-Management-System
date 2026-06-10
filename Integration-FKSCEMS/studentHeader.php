@@ -1,6 +1,12 @@
 <?php
 
 $current_page = basename($_SERVER['PHP_SELF']);
+$event_pages = [
+    'event_registration.php',
+    'event_registration_form.php',
+    'event_registration_history.php',
+    'student_event_view.php',
+];
 
 ?>
 <nav class="top-navigation">
@@ -23,8 +29,8 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 </a>
             </li>
             <li>
-                <a href="event_registration.php" class="<?php echo ($current_page == 'event_registration.php') ? 'active' : ''; ?>">
-                    Activities
+                <a href="event_registration.php" class="<?php echo in_array($current_page, $event_pages, true) ? 'active' : ''; ?>">
+                    Event Registration
                 </a>
             </li>
             <li>
@@ -74,6 +80,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
     position: sticky;
     top: 0;
     z-index: 1000;
+    width: 100%;
 }
 
 .nav-wrapper {
@@ -82,6 +89,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
     justify-content: space-between;
     align-items: center;
     padding: 0 20px;
+    width: 100%;
 }
 
 .nav-left {
@@ -110,6 +118,13 @@ $current_page = basename($_SERVER['PHP_SELF']);
     list-style: none;
     display: flex;
     gap: 10px;
+    margin: 0;
+    padding: 0;
+    align-items: center;
+}
+
+.menu-links li {
+    list-style: none;
 }
 
 .menu-links a {
@@ -120,6 +135,9 @@ $current_page = basename($_SERVER['PHP_SELF']);
     text-transform: uppercase;
     padding: 10px 15px;
     border-radius: 5px;
+    display: inline-block;
+    line-height: 1.2;
+    margin: 0;
 }
 
 .menu-links a.active {
@@ -131,6 +149,43 @@ $current_page = basename($_SERVER['PHP_SELF']);
 .admin-profile {
     font-weight: bold;
     color: var(--fk-blue);
+    font-size: 0.9rem;
+    white-space: nowrap;
+}
+
+body .top-navigation {
+    background: #ffffff !important;
+    border-bottom: 1px solid #ddd !important;
+    padding: 10px 0 !important;
+}
+
+body .top-navigation .nav-wrapper {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 0 20px !important;
+}
+
+body .top-navigation .menu-links {
+    display: flex !important;
+    gap: 10px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+body .top-navigation .menu-links a {
+    color: #444 !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    padding: 10px 15px !important;
+    border-radius: 5px !important;
+}
+
+body .top-navigation .menu-links a.active {
+    background-color: #eef5ff !important;
+    color: var(--fk-blue) !important;
+    border-bottom: 3px solid var(--fk-blue) !important;
 }
 
 </style>

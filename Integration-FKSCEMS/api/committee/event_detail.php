@@ -28,7 +28,7 @@ if (empty($eventId)) {
     exit;
 }
 
-mysqli_query($conn, "ALTER TABLE `eventregistration` MODIFY `registration_status` ENUM('registered','cancelled','waiting','notified') NOT NULL");
+mysqli_query($conn, "ALTER TABLE `eventregistration` MODIFY `registration_status` ENUM('registered','cancelled') NOT NULL");
 
 updateEventStatuses($conn);
 
@@ -72,7 +72,6 @@ $participantSql = "
     SELECT
         er.`registration_id`,
         er.`registration_date`,
-        er.`confirmation_status`,
         s.`matric_number`,
         s.`name`,
         s.`course`,
@@ -99,7 +98,6 @@ while ($row = mysqli_fetch_assoc($participantResult)) {
     $participants[] = [
         "registrationId" => (int) $row["registration_id"],
         "registrationDate" => $row["registration_date"],
-        "confirmationStatus" => $row["confirmation_status"],
         "matricNumber" => $row["matric_number"],
         "name" => $row["name"],
         "course" => $row["course"],
@@ -112,16 +110,17 @@ while ($row = mysqli_fetch_assoc($participantResult)) {
 
 $waitingSql = "
     SELECT
-        ew.`registration_id`,
-        ew.`registration_status`,
-        ew.`registration_date`,
+        ew.`waiting_id`,
+        ew.`waiting_status`,
+        ew.`joined_at`,
+        ew.`notified_at`,
         s.`matric_number`,
         s.`name`
-    FROM `eventregistration` ew
+    FROM `eventwaitinglist` ew
     INNER JOIN `student` s ON s.`matric_number` = ew.`matric_number`
     WHERE ew.`event_id` = ?
-      AND ew.`registration_status` IN ('waiting', 'notified')
-    ORDER BY ew.`registration_date` ASC
+      AND ew.`waiting_status` IN ('waiting', 'notified')
+    ORDER BY ew.`joined_at` ASC
 ";
 
 $waitingStmt = mysqli_prepare($conn, $waitingSql);
@@ -132,12 +131,12 @@ $waitingResult = mysqli_stmt_get_result($waitingStmt);
 $waitingList = [];
 while ($row = mysqli_fetch_assoc($waitingResult)) {
     $waitingList[] = [
-        "waitingId" => (int) $row["registration_id"],
+        "waitingId" => (int) $row["waiting_id"],
         "matricNumber" => $row["matric_number"],
         "name" => $row["name"],
-        "waitingStatus" => $row["registration_status"],
-        "joinedAt" => $row["registration_date"],
-        "notifiedAt" => null
+        "waitingStatus" => $row["waiting_status"],
+        "joinedAt" => $row["joined_at"],
+        "notifiedAt" => $row["notified_at"]
     ];
 }
 

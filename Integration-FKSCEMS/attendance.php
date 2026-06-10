@@ -5,7 +5,7 @@ include ('session.php');
 
 $servername = "localhost";
 $username = "root";
-$password = "";
+$password = "Amni102030.";
 $dbname = "fk_scems_db"; // Ensure this matches your registration/login DB name
 
 $conn = new mysqli($servername, $username, $password, $dbname);

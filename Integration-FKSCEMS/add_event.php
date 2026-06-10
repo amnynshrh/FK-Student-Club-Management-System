@@ -1,278 +1,336 @@
 <?php
 session_start();
+function db_connect()
+{
+  $conn = mysqli_connect('localhost', 'root', 'Amni102030.', 'fk_scems_db');
+  if (!$conn) {
+    die('Database connection failed: ' . mysqli_connect_error());
+  }
+  mysqli_set_charset($conn, 'utf8mb4');
+  return $conn;
+}
+function e($v)
+{
+  return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
+}
+function t($time)
+{
+  return date('g:i A', strtotime($time));
+}
+function dmy($date)
+{
+  return date('d M Y', strtotime($date));
+}
+function month_name($date)
+{
+  return date('F', strtotime($date));
+}
+function logout_if_requested()
+{
+  if (($_GET['action'] ?? '') === 'logout') {
+    session_destroy();
+    header('Location: ../index.html');
+    exit;
+  }
+}
+function require_login($roles = [])
+{
+  if (empty($_SESSION['Login']) || $_SESSION['Login'] !== 'YES') {
+    header('Location: ../index.html');
+    exit;
+  }
+  if ($roles && !in_array($_SESSION['role'] ?? '', $roles, true)) {
+    echo '<p style="padding:20px;color:#b00020;">Access denied.</p>';
+    exit;
+  }
+}
+function update_event_status($conn)
+{
+  mysqli_query($conn, "UPDATE event SET event_status=CASE WHEN NOW()>CONCAT(event_date,' ',end_time) THEN 'completed' WHEN NOW() BETWEEN CONCAT(event_date,' ',event_time) AND CONCAT(event_date,' ',end_time) THEN 'ongoing' WHEN (SELECT COUNT(*) FROM eventregistration er WHERE er.event_id=event.event_id AND er.registration_status='registered')>=max_participant THEN 'full' WHEN registration_open=1 THEN 'open' WHEN NOW()<CONCAT(event_date,' ',event_time) THEN 'upcoming' ELSE 'completed' END WHERE event_status!='cancelled'");
+}
+function ensure_registration_open_column($conn)
+{
+  $result = mysqli_query($conn, "SHOW COLUMNS FROM event LIKE 'registration_open'");
+  if ($result && mysqli_num_rows($result) === 0) {
+    mysqli_query($conn, "ALTER TABLE event ADD COLUMN registration_open TINYINT(1) NOT NULL DEFAULT 1 AFTER event_status");
+  }
+}
+function badge($status)
+{
+  $s = strtolower((string)$status);
+  return '<span class="status-badge ' . e($s) . '">' . e(ucfirst($s)) . '</span>';
+}
+logout_if_requested();
+$conn = db_connect();
+setcookie('last_event_page', basename($_SERVER['PHP_SELF']), time() + 86400, '/');
 
-$servername = "localhost";
-$username = "root";
-$password = "";
-$dbname = "fk_scems_db";
+require_login(['committee']);
+update_event_status($conn);
+ensure_registration_open_column($conn);
+$message = '';
 
-$conn = new mysqli($servername, $username, $password, $dbname);
-if ($conn->connect_error) { die("Connection failed: " . $conn->connect_error); }
+$committeeId = $_SESSION['SESS_COMMITTEE_ID'] ?? 0;
+if (empty($committeeId)) {
+  $userId = $_SESSION['SESS_USER_ID'] ?? $_SESSION['user_id'] ?? 0;
+  $committeeStmt = mysqli_prepare($conn, "SELECT c.committee_id, c.club_id FROM student s INNER JOIN membership m ON s.matric_number=m.matric_number INNER JOIN committee c ON c.membership_id=m.membership_id WHERE s.user_id=? LIMIT 1");
+  mysqli_stmt_bind_param($committeeStmt, 'i', $userId);
+  mysqli_stmt_execute($committeeStmt);
+  $committeeRow = mysqli_fetch_assoc(mysqli_stmt_get_result($committeeStmt));
+  $committeeId = $committeeRow['committee_id'] ?? 0;
+  $clubId = $committeeRow['club_id'] ?? 0;
+  if ($committeeId) {
+    $_SESSION['SESS_COMMITTEE_ID'] = $committeeId;
+  }
+}
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $committee_id = $_SESSION['SESS_COMMITTEE_ID'];
-    $sql_club = "
-    SELECT club_id
-    FROM committee
-    WHERE committee_id = ?
-    LIMIT 1
-    ";
+$clubId = $clubId ?? 0;
+if ($committeeId) {
+  $clubStmt = mysqli_prepare($conn, "SELECT club_id FROM committee WHERE committee_id=? LIMIT 1");
+  mysqli_stmt_bind_param($clubStmt, 'i', $committeeId);
+  mysqli_stmt_execute($clubStmt);
+  $clubRow = mysqli_fetch_assoc(mysqli_stmt_get_result($clubStmt));
+  $clubId = $clubRow['club_id'] ?? 0;
+}
 
-    $stmt_club = $conn->prepare($sql_club);
-    $stmt_club->bind_param("i", $committee_id);
-    $stmt_club->execute();
-    $result_club = $stmt_club->get_result();
-    $club_data = $result_club->fetch_assoc();
+$event = ['title' => '', 'description' => '', 'date' => '', 'startTime' => '', 'endTime' => '', 'venue' => '', 'participants' => '', 'registration_open' => '1'];
 
-    $club_id = $club_data['club_id'];
-    $event_title = trim($_POST['event_title']);
-    $event_description = trim($_POST['event_description']);
-    $event_date = $_POST['event_date'];
-    $event_time = $_POST['event_time'];
-    $venue = trim($_POST['venue']);
-    $max_participant = $_POST['max_participant'];
-    $event_status = "Upcoming";
-    $qr_code = uniqid("EVENT_");
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+  $event = [
+    'title' => trim($_POST['title'] ?? ''),
+    'description' => trim($_POST['description'] ?? ''),
+    'date' => $_POST['date'] ?? '',
+    'startTime' => $_POST['startTime'] ?? '',
+    'endTime' => $_POST['endTime'] ?? '',
+    'venue' => trim($_POST['venue'] ?? ''),
+    'participants' => $_POST['participants'] ?? '',
+    'registration_open' => ($_POST['registration_open'] ?? '0') === '1' ? '1' : '0'
+  ];
 
-    $sql_insert = "
-    INSERT INTO event (
-        club_id,
-        committee_id,
-        event_title,
-        event_description,
-        event_date,
-        event_time,
-        venue,
-        max_participant,
-        event_status,
-        qr_code
-    )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ";
+  if ($event['title'] === '' || $event['description'] === '' || $event['date'] === '' || $event['startTime'] === '' || $event['endTime'] === '' || $event['venue'] === '' || $event['participants'] === '') {
+    $message = 'Please fill in all required fields.';
+  } elseif ($event['endTime'] <= $event['startTime']) {
+    $message = 'End time must be after start time.';
+  } elseif (!$committeeId || !$clubId) {
+    $message = 'Committee club information was not found. Please login again.';
+  } else {
+    $status = $event['registration_open'] === '1' ? 'open' : (date('Y-m-d H:i:s') < $event['date'] . ' ' . $event['startTime'] ? 'upcoming' : 'ongoing');
+    $stmt = mysqli_prepare($conn, "INSERT INTO event (club_id, committee_id, event_title, event_description, event_date, event_time, end_time, venue, max_participant, event_status, registration_open) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    mysqli_stmt_bind_param($stmt, 'iissssssisi', $clubId, $committeeId, $event['title'], $event['description'], $event['date'], $event['startTime'], $event['endTime'], $event['venue'], $event['participants'], $status, $event['registration_open']);
 
-    $stmt_insert = $conn->prepare($sql_insert);
-    $stmt_insert->bind_param(
-        "iissssisss",
-        $club_id,
-        $committee_id,
-        $event_title,
-        $event_description,
-        $event_date,
-        $event_time,
-        $venue,
-        $max_participant,
-        $event_status,
-        $qr_code
-    );
-
-    if ($stmt_insert->execute()) {
-        header("Location: manageEvents.php?success=1");
-        exit();
-    } else {
-        echo "Insert Error: " . $conn->error;
+    if (mysqli_stmt_execute($stmt)) {
+      header('Location: manage_events.php?success=event_added');
+      exit;
     }
+    $message = 'Event save failed: ' . mysqli_stmt_error($stmt);
+  }
 }
 ?>
-<!doctype html>
+<!DOCTYPE html>
+
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Add New Event - Committee</title>
 
-    <!-- Bootstrap 5 CSS -->
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-    />
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Manage Event - Committee</title>
 
-    <!-- Bootstrap Icons -->
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
-      rel="stylesheet"
-    />
+  <!-- Bootstrap 5 CSS -->
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    rel="stylesheet" />
 
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Bootstrap Icons -->
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
+    rel="stylesheet" />
 
-    <!-- Custom Theme -->
-    <link rel="stylesheet" href="committee.css" />
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
 
-    <style>
-      body {
-        background-color: #ffffff;
-      }
+  <!-- Custom Theme UMPSA -->
+  <link rel="stylesheet" href="assets/css/committee.css" />
 
-      .table > :not(caption) > * > * {
-        border-bottom-color: #eeeff2;
-      }
+  <style>
+    body {
+      background-color: #ffffff;
+    }
 
-      .btn-umpsa-teal {
-        background-color: #009e96;
-        color: white;
-        transition: 0.2s;
-      }
+    .table> :not(caption)>*>* {
+      border-bottom-color: #eeeff2;
+    }
 
-      .btn-umpsa-teal:hover {
-        background-color: #1c3f95;
-        color: white;
-      }
-    </style>
-  </head>
+    .btn-umpsa-teal {
+      background-color: #009e96;
+      color: white;
+      transition: 0.2s;
+    }
 
-  <body>
-    <?php include('committeeHeader.php') ?>
+    .btn-umpsa-teal:hover {
+      background-color: #1c3f95;
+      color: white;
+    }
 
-    <main class="student-content">
-      <div class="page-header">
-        <h1 class="page-title">Add New Event</h1>
+    .nav-right .nav-link.active-link {
+      color: #1c3f95;
+      font-weight: 700;
+    }
+  </style>
+</head>
 
-        <p class="page-subtitle">
-          Create and publish a new event for FK students.
-        </p>
-      </div>
+<body>
+  <?php include('committeeHeader.php') ?>
 
-      <!-- Form Card -->
-      <div class="event-form-card">
-        <form method="POST" id="addEventForm" novalidate>
-          <!-- Event Title -->
+  <!-- Main Content -->
+  <main class="student-content">
+    <div id="formMessage" class="alert alert-danger <?php echo $message ? '' : 'd-none'; ?>"><?php echo e($message); ?></div>
+    <div class="page-header">
+      <h1 class="page-title">Add New Event</h1>
+
+      <p class="page-subtitle">
+        Create and publish a new event for FK students.
+      </p>
+    </div>
+
+    <!-- Form Card -->
+    <div class="event-form-card">
+      <form id="eventForm" method="POST" action="add_event.php" onsubmit="return validateEventForm();" novalidate>
+        <!-- Event Title -->
+        <div class="mb-4">
+          <label class="form-label-custom">
+            Event Title <span class="required-star">*</span>
+          </label>
+
+          <input
+            type="text"
+            id="eventTitle" name="title" required value="<?php echo e($event['title'] ?? ''); ?>"
+            class="form-control form-control-custom"
+            placeholder="Enter event title" />
+
+          <small class="error-message" id="titleError"></small>
+        </div>
+
+        <!-- Description -->
+        <div class="mb-4">
+          <label class="form-label-custom">
+            Description <span class="required-star">*</span>
+          </label>
+
+          <textarea
+            id="eventDescription" name="description" required
+            class="form-control form-control-custom textarea-custom"
+            placeholder="Enter event description"><?php echo e($event['description'] ?? ''); ?></textarea>
+
+          <small class="error-message" id="descriptionError"></small>
+        </div>
+
+        <!-- Date & Time -->
+        <div class="row">
+          <!-- Event Date -->
+          <div class="col-md-4 mb-4">
+            <label class="form-label-custom">
+              Event Date <span class="required-star">*</span>
+            </label>
+
+            <div class="custom-input-wrapper">
+              <input
+                type="date"
+                id="eventDate" name="date" required value="<?php echo e($event['date'] ?? ''); ?>"
+                class="form-control-custom custom-date-input" />
+
+              <button type="button" class="input-icon-btn">
+                <i class="bi bi-calendar-event"></i>
+              </button>
+            </div>
+
+            <small class="error-message" id="dateError"></small>
+          </div>
+
+          <!-- Start Time -->
+          <div class="col-md-4 mb-4">
+            <label class="form-label-custom">
+              Start Time <span class="required-star">*</span>
+            </label>
+
+            <div class="custom-input-wrapper">
+              <input
+                type="time"
+                id="eventStartTime" name="startTime" required value="<?php echo e($event['startTime'] ?? ''); ?>"
+                class="form-control-custom custom-time-input" />
+
+              <button type="button" class="input-icon-btn">
+                <i class="bi bi-clock"></i>
+              </button>
+            </div>
+
+            <small class="error-message" id="startTimeError"></small>
+          </div>
+
+          <!-- End Time -->
+          <div class="col-md-4 mb-4">
+            <label class="form-label-custom">
+              End Time <span class="required-star">*</span>
+            </label>
+
+            <div class="custom-input-wrapper">
+              <input
+                type="time"
+                id="eventEndTime" name="endTime" required value="<?php echo e($event['endTime'] ?? ''); ?>"
+                class="form-control-custom custom-time-input" />
+
+              <button type="button" class="input-icon-btn">
+                <i class="bi bi-clock"></i>
+              </button>
+            </div>
+
+            <small class="error-message" id="endTimeError"></small>
+          </div>
+        </div>
+
+        <!-- Venue -->
+        <div class="mb-4">
+          <label class="form-label-custom">
+            Venue <span class="required-star">*</span>
+          </label>
+
+          <input
+            type="text"
+            id="eventVenue" name="venue" required value="<?php echo e($event['venue'] ?? ''); ?>"
+            class="form-control form-control-custom"
+            placeholder="Enter venue" />
+
+          <small class="error-message" id="venueError"></small>
+        </div>
+
+        <!-- Participants & Status -->
+        <div class="row">
+
+          <!-- Max Participants -->
           <div class="mb-4">
             <label class="form-label-custom">
-              Event Title <span class="required-star">*</span>
+              Max Participants <span class="required-star">*</span>
             </label>
 
             <input
-              type="text"
-              id="eventTitle"
-              name="event_title"
+              type="number"
+              id="eventParticipants" name="participants" min="1" required value="<?php echo e($event['participants'] ?? ''); ?>"
               class="form-control form-control-custom"
-              placeholder="Enter event title"
-            />
+              placeholder="Enter maximum participants" />
 
-            <small class="error-message" id="titleError"></small>
+            <small class="error-message" id="participantsError"></small>
           </div>
 
-          <!-- Description -->
           <div class="mb-4">
             <label class="form-label-custom">
-              Description <span class="required-star">*</span>
+              Student Registration <span class="required-star">*</span>
             </label>
 
-            <textarea
-              id="eventDescription"
-              name="event_description"
-              class="form-control form-control-custom textarea-custom"
-              placeholder="Enter event description"
-            ></textarea>
+            <select name="registration_open" id="registrationOpen" class="form-control form-control-custom" required>
+              <option value="1" <?php echo ($event['registration_open'] ?? '1') === '1' ? 'selected' : ''; ?>>Open Registration</option>
+              <option value="0" <?php echo ($event['registration_open'] ?? '1') === '0' ? 'selected' : ''; ?>>Close Registration</option>
+            </select>
 
-            <small class="error-message" id="descriptionError"></small>
+            <small class="error-message" id="registrationOpenError"></small>
           </div>
-
-          <!-- Date & Time -->
-          <div class="row">
-            <!-- Event Date -->
-            <div class="col-md-4 mb-4">
-              <label class="form-label-custom">
-                Event Date <span class="required-star">*</span>
-              </label>
-
-              <div class="custom-input-wrapper">
-                <input
-                  type="date"
-                  id="eventDate"
-                  name="event_date"
-                  class="form-control-custom custom-date-input"
-                />
-
-                <button type="button" class="input-icon-btn">
-                  <i class="bi bi-calendar-event"></i>
-                </button>
-              </div>
-
-              <small class="error-message" id="dateError"></small>
-            </div>
-
-            <!-- Start Time -->
-            <div class="col-md-4 mb-4">
-              <label class="form-label-custom">
-                Start Time <span class="required-star">*</span>
-              </label>
-
-              <div class="custom-input-wrapper">
-                <input
-                  type="time"
-                  id="eventStartTime"
-                  name="event_time"
-                  class="form-control-custom custom-time-input"
-                />
-
-                <button type="button" class="input-icon-btn">
-                  <i class="bi bi-clock"></i>
-                </button>
-              </div>
-
-              <small class="error-message" id="startTimeError"></small>
-            </div>
-
-            <!-- End Time -->
-            <div class="col-md-4 mb-4">
-              <label class="form-label-custom">
-                End Time <span class="required-star">*</span>
-              </label>
-
-              <div class="custom-input-wrapper">
-                <input
-                  type="time"
-                  id="eventEndTime"
-                  name="event_end_time"
-                  class="form-control-custom custom-time-input"
-                />
-
-                <button type="button" class="input-icon-btn">
-                  <i class="bi bi-clock"></i>
-                </button>
-              </div>
-
-              <small class="error-message" id="endTimeError"></small>
-            </div>
-          </div>
-
-          <!-- Venue -->
-          <div class="mb-4">
-            <label class="form-label-custom">
-              Venue <span class="required-star">*</span>
-            </label>
-
-            <input
-              type="text"
-              id="eventVenue"
-              name="venue"
-              class="form-control form-control-custom"
-              placeholder="Enter venue"
-            />
-
-            <small class="error-message" id="venueError"></small>
-          </div>
-
-          <!-- Participants & Status -->
-          <div class="row">
-            
-<!-- Max Participants -->
-<div class="mb-4">
-  <label class="form-label-custom">
-    Max Participants <span class="required-star">*</span>
-  </label>
-
-  <input
-    type="number"
-    id="eventParticipants"
-    name="max_participant"
-    class="form-control form-control-custom"
-    placeholder="Enter maximum participants"
-  />
-
-  <small class="error-message" id="participantsError"></small>
-</div>
 
 
           <!-- Divider -->
@@ -280,21 +338,59 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
           <!-- Buttons -->
           <div class="button-group-custom">
-            <button type="button" class="btn-cancel-custom" onclick="window.history.back()">Cancel</button>
+            <a href="manage_events.php" class="btn-cancel-custom"> Cancel </a>
 
             <button type="submit" class="btn-save-custom">
               <i class="bi bi-check-circle me-2"></i>
               Save Event
             </button>
           </div>
-        </form>
-      </div>
-    </main>
+      </form>
+    </div>
+  </main>
 
-    <!-- Custom JavaScript -->
-    <script src="../assets/js/committee/add_event.js"></script>
+  <!-- Custom JavaScript -->
 
-    <!-- Bootstrap 5 JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  </body>
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    function validateEventForm() {
+      var title = document.getElementById('eventTitle').value.trim();
+      var desc = document.getElementById('eventDescription').value.trim();
+      var date = document.getElementById('eventDate').value;
+      var start = document.getElementById('eventStartTime').value;
+      var end = document.getElementById('eventEndTime').value;
+      var venue = document.getElementById('eventVenue').value.trim();
+      var participants = document.getElementById('eventParticipants').value;
+      var box = document.getElementById('formMessage');
+      if (box) {
+        box.classList.add('d-none');
+        box.innerHTML = '';
+      }
+      if (title === '' || desc === '' || date === '' || start === '' || end === '' || venue === '' || participants === '') {
+        if (box) {
+          box.classList.remove('d-none');
+          box.innerHTML = 'Please fill in all required fields.';
+        }
+        return false;
+      }
+      if (end <= start) {
+        if (box) {
+          box.classList.remove('d-none');
+          box.innerHTML = 'End time must be after start time.';
+        }
+        return false;
+      }
+      if (Number(participants) <= 0) {
+        if (box) {
+          box.classList.remove('d-none');
+          box.innerHTML = 'Maximum participants must be more than 0.';
+        }
+        return false;
+      }
+      return true;
+    }
+  </script>
+</body>
+
 </html>

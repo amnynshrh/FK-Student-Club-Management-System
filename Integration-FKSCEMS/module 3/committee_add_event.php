@@ -42,14 +42,7 @@ function require_login($roles = [])
 }
 function update_event_status($conn)
 {
-  mysqli_query($conn, "UPDATE event SET event_status=CASE WHEN NOW()>CONCAT(event_date,' ',end_time) THEN 'completed' WHEN NOW() BETWEEN CONCAT(event_date,' ',event_time) AND CONCAT(event_date,' ',end_time) THEN 'ongoing' WHEN (SELECT COUNT(*) FROM eventregistration er WHERE er.event_id=event.event_id AND er.registration_status='registered')>=max_participant THEN 'full' WHEN registration_open=1 THEN 'open' WHEN NOW()<CONCAT(event_date,' ',event_time) THEN 'upcoming' ELSE 'completed' END WHERE event_status!='cancelled'");
-}
-function ensure_registration_open_column($conn)
-{
-  $result = mysqli_query($conn, "SHOW COLUMNS FROM event LIKE 'registration_open'");
-  if ($result && mysqli_num_rows($result) === 0) {
-    mysqli_query($conn, "ALTER TABLE event ADD COLUMN registration_open TINYINT(1) NOT NULL DEFAULT 1 AFTER event_status");
-  }
+  mysqli_query($conn, "UPDATE event SET event_status=CASE WHEN NOW()<CONCAT(event_date,' ',event_time) THEN 'upcoming' WHEN NOW() BETWEEN CONCAT(event_date,' ',event_time) AND CONCAT(event_date,' ',end_time) THEN 'ongoing' ELSE 'completed' END WHERE event_status!='cancelled'");
 }
 function badge($status)
 {
@@ -61,50 +54,25 @@ $conn = db_connect();
 setcookie('last_event_page', basename($_SERVER['PHP_SELF']), time() + 86400, '/');
 
 require_login(['committee']);
-ensure_registration_open_column($conn);
 $message = '';
-$eventId = $_GET['id'] ?? $_POST['event_id'] ?? '';
-if ($eventId === '') {
-  die('Event ID is required.');
-}
+$event = ['title' => '', 'description' => '', 'date' => '', 'startTime' => '', 'endTime' => '', 'venue' => '', 'participants' => ''];
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-  if (($_POST['action'] ?? '') === 'cancel_event') {
-    $st = mysqli_prepare($conn, "UPDATE event SET event_status='cancelled', registration_open=0 WHERE event_id=?");
-    mysqli_stmt_bind_param($st, 'i', $eventId);
-    mysqli_stmt_execute($st);
-    header('Location: manage_events.php?success=event_cancelled');
-    exit;
-  }
-
-  $title = trim($_POST['title'] ?? '');
-  $description = trim($_POST['description'] ?? '');
-  $date = $_POST['date'] ?? '';
-  $start = $_POST['startTime'] ?? '';
-  $end = $_POST['endTime'] ?? '';
-  $venue = trim($_POST['venue'] ?? '');
-  $participants = $_POST['participants'] ?? '';
-  $registrationOpen = ($_POST['registration_open'] ?? '0') === '1' ? '1' : '0';
-  if ($title === '' || $description === '' || $date === '' || $start === '' || $end === '' || $venue === '' || $participants === '') {
+  $event = ['title' => trim($_POST['title'] ?? ''), 'description' => trim($_POST['description'] ?? ''), 'date' => $_POST['date'] ?? '', 'startTime' => $_POST['startTime'] ?? '', 'endTime' => $_POST['endTime'] ?? '', 'venue' => trim($_POST['venue'] ?? ''), 'participants' => $_POST['participants'] ?? ''];
+  if ($event['title'] === '' || $event['description'] === '' || $event['date'] === '' || $event['startTime'] === '' || $event['endTime'] === '' || $event['venue'] === '' || $event['participants'] === '') {
     $message = 'Please fill in all required fields.';
-  } elseif ($end <= $start) {
+  } elseif ($event['endTime'] <= $event['startTime']) {
     $message = 'End time must be after start time.';
   } else {
-    $status = $registrationOpen === '1' ? 'open' : (date('Y-m-d H:i:s') < $date . ' ' . $start ? 'upcoming' : 'ongoing');
-    $st = mysqli_prepare($conn, "UPDATE event SET event_title=?,event_description=?,event_date=?,event_time=?,end_time=?,venue=?,max_participant=?,event_status=?,registration_open=? WHERE event_id=?");
-    mysqli_stmt_bind_param($st, 'ssssssisii', $title, $description, $date, $start, $end, $venue, $participants, $status, $registrationOpen, $eventId);
+    $status = date('Y-m-d H:i:s') < $event['date'] . ' ' . $event['startTime'] ? 'upcoming' : 'ongoing';
+    $clubId = 1;
+    $committeeId = 1;
+    $st = mysqli_prepare($conn, "INSERT INTO event (club_id,committee_id,event_title,event_description,event_date,event_time,end_time,venue,max_participant,event_status) VALUES (?,?,?,?,?,?,?,?,?,?)");
+    mysqli_stmt_bind_param($st, 'iissssssis', $clubId, $committeeId, $event['title'], $event['description'], $event['date'], $event['startTime'], $event['endTime'], $event['venue'], $event['participants'], $status);
     mysqli_stmt_execute($st);
-    header('Location: manage_events.php?success=event_updated');
+    header('Location: ../manage_events.php?success=event_added');
     exit;
   }
 }
-$st = mysqli_prepare($conn, "SELECT event_title,event_description,event_date,event_time,end_time,venue,max_participant,registration_open FROM event WHERE event_id=?");
-mysqli_stmt_bind_param($st, 'i', $eventId);
-mysqli_stmt_execute($st);
-$r = mysqli_fetch_assoc(mysqli_stmt_get_result($st));
-if (!$r) {
-  die('Event not found.');
-}
-$event = ['title' => $r['event_title'], 'description' => $r['event_description'], 'date' => $r['event_date'], 'startTime' => $r['event_time'], 'endTime' => $r['end_time'], 'venue' => $r['venue'], 'participants' => $r['max_participant'], 'registration_open' => (string) $r['registration_open']];
 ?>
 <!DOCTYPE html>
 
@@ -113,7 +81,7 @@ $event = ['title' => $r['event_title'], 'description' => $r['event_description']
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Edit Event - Committee</title>
+  <title>Add New Event - Committee</title>
 
   <!-- Bootstrap 5 CSS -->
   <link
@@ -128,8 +96,8 @@ $event = ['title' => $r['event_title'], 'description' => $r['event_description']
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- Custom Theme UMPSA -->
-  <link rel="stylesheet" href="assets/css/committee.css" />
+  <!-- Custom Theme -->
+  <link rel="stylesheet" href="committee.css" />
 
   <style>
     body {
@@ -150,57 +118,44 @@ $event = ['title' => $r['event_title'], 'description' => $r['event_description']
       background-color: #1c3f95;
       color: white;
     }
-
-    .nav-right .nav-link.active-link {
-      color: #1c3f95;
-      font-weight: 700;
-    }
-
-    .error-message {
-      color: #dc3545;
-      font-size: 13px;
-      margin-top: 6px;
-      display: block;
-    }
-
-        .input-error {
-            border: 1px solid #dc3545 !important;
-        }
-
-    .btn-cancel-event-custom {
-      background-color: #ff4d4f;
-      border: 1px solid #ff4d4f;
-      color: #ffffff;
-      border-radius: 8px;
-      padding: 12px 24px;
-      font-size: 14px;
-      font-weight: 700;
-      transition: 0.2s;
-    }
-
-    .btn-cancel-event-custom:hover {
-      background-color: #dc3545;
-      border-color: #dc3545;
-      color: #ffffff;
-    }
   </style>
 </head>
 
 <body>
-  <?php include('committeeHeader.php') ?>
+  <header class="top-navbar">
+    <div class="nav-left">
+      <img
+        src="logo-fk.png"
+        alt="FK Logo"
+        class="nav-logo"
+        onerror="this.src = 'logo-fk.png'" />
 
-  <!-- Main Content -->
+      <div class="nav-brand">FK Student Club &<br />Management System</div>
+    </div>
+
+    <div class="nav-right">
+      <a href="../committeeDashboard.php" class="nav-link">Management</a>
+      <a href="committee_manage_events.php" class="nav-link active-link">Manage Events</a>
+      <a href="../manage_attendance.php" class="nav-link">Manage Attendance</a>
+      <a href="../editProfile.php" class="nav-link">Profile</a>
+      <a href="?action=logout" class="nav-link">Log Out</a>
+    </div>
+    <div class="committee-profile">Committee: <?php echo e($_SESSION['name'] ?? $_SESSION['user_name'] ?? $_SESSION['SESS_USERNAME'] ?? 'Committee'); ?></div>
+  </header>
+
   <main class="student-content">
     <div id="formMessage" class="alert alert-danger <?php echo $message ? '' : 'd-none'; ?>"><?php echo e($message); ?></div>
     <div class="page-header">
-      <h1 class="page-title">Edit Event</h1>
+      <h1 class="page-title">Add New Event</h1>
 
-      <p class="page-subtitle">Edit and update the event details.</p>
+      <p class="page-subtitle">
+        Create and publish a new event for FK students.
+      </p>
     </div>
 
     <!-- Form Card -->
     <div class="event-form-card">
-      <form id="eventForm" method="POST" action="edit_event.php?id=<?php echo e($eventId); ?>" onsubmit="return validateEventForm();" novalidate><input type="hidden" name="event_id" value="<?php echo e($eventId); ?>">
+      <form id="eventForm" method="POST" action="committee_add_event.php" onsubmit="return validateEventForm();" novalidate>
         <!-- Event Title -->
         <div class="mb-4">
           <label class="form-label-custom">
@@ -308,57 +263,37 @@ $event = ['title' => $r['event_title'], 'description' => $r['event_description']
           <small class="error-message" id="venueError"></small>
         </div>
 
-        <!-- Max Participants -->
-        <div class="mb-4">
-          <label class="form-label-custom">
-            Max Participants <span class="required-star">*</span>
-          </label>
+        <!-- Participants & Status -->
+        <div class="row">
 
-          <input
-            type="number"
-            id="eventParticipants" name="participants" min="1" required value="<?php echo e($event['participants'] ?? ''); ?>"
-            class="form-control form-control-custom"
-            placeholder="Enter maximum participants" />
+          <!-- Max Participants -->
+          <div class="mb-4">
+            <label class="form-label-custom">
+              Max Participants <span class="required-star">*</span>
+            </label>
 
-          <small class="error-message" id="participantsError"></small>
-        </div>
+            <input
+              type="number"
+              id="eventParticipants" name="participants" min="1" required value="<?php echo e($event['participants'] ?? ''); ?>"
+              class="form-control form-control-custom"
+              placeholder="Enter maximum participants" />
 
-        <div class="mb-4">
-          <label class="form-label-custom">
-            Student Registration <span class="required-star">*</span>
-          </label>
+            <small class="error-message" id="participantsError"></small>
+          </div>
 
-          <select name="registration_open" id="registrationOpen" class="form-control form-control-custom" required>
-            <option value="1" <?php echo ($event['registration_open'] ?? '1') === '1' ? 'selected' : ''; ?>>Open Registration</option>
-            <option value="0" <?php echo ($event['registration_open'] ?? '1') === '0' ? 'selected' : ''; ?>>Close Registration</option>
-          </select>
 
-          <small class="error-message" id="registrationOpenError"></small>
-        </div>
+          <!-- Divider -->
+          <div class="section-divider"></div>
 
-        <!-- Divider -->
-        <div class="section-divider"></div>
+          <!-- Buttons -->
+          <div class="button-group-custom">
+            <a href="committee_manage_events.php" class="btn-cancel-custom"> Cancel </a>
 
-        <!-- Buttons -->
-        <div class="button-group-custom">
-          <a href="manage_events.php" class="btn-cancel-custom"> Cancel </a>
-
-          <button
-            type="submit"
-            name="action"
-            value="cancel_event"
-            class="btn-cancel-event-custom"
-            formnovalidate
-            onclick="return confirm('Cancel this event from being held?');">
-            <i class="bi bi-x-circle me-2"></i>
-            Cancel Event
-          </button>
-
-          <button type="submit" class="btn-save-custom">
-            <i class="bi bi-check-circle me-2"></i>
-            Update Event
-          </button>
-        </div>
+            <button type="submit" class="btn-save-custom">
+              <i class="bi bi-check-circle me-2"></i>
+              Save Event
+            </button>
+          </div>
       </form>
     </div>
   </main>

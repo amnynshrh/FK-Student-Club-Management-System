@@ -153,10 +153,18 @@ body {
   /* UMPSA Teal */
 }
 
+.committee-profile {
+  color: #004a99;
+  font-size: 16px;
+  font-weight: 700;
+  margin-left: 24px;
+  white-space: nowrap;
+}
+
 /* ── Content Area ── */
 .student-content {
   padding: 40px 30px;
-  max-width: 1200px;
+  max-width: 1000px;
   margin: 0 auto;
 }
 
@@ -646,14 +654,6 @@ table.event-table tbody tr:hover {
   background-color: #009e96;
 }
 
-.status-badge.open {
-  background-color: #009e96;
-}
-
-.status-badge.full {
-  background-color: #ff4d4f;
-}
-
 .status-badge.upcoming {
   background-color: #6f7287;
 }
@@ -1047,4 +1047,68 @@ table.event-table tbody tr:hover {
 
 .input-error {
   border: 1px solid #dc3545 !important;
+}
+/* Module 3 compatibility: keep the old committee theme on simplified PHP pages. */
+.student-content > .page-title {
+    margin-bottom: 22px;
+}
+
+.student-content > .text-success,
+.student-content > .text-danger {
+    margin-bottom: 18px;
+}
+
+.student-content > .event-table-custom,
+.student-content > table.event-table-custom {
+    overflow: hidden;
+    background: #ffffff;
+    border-radius: 14px;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+}
+
+.event-table-custom {
+    width: 100%;
+}
+
+.event-table-custom td {
+    vertical-align: middle;
+}
+
+.event-table-custom form {
+    display: inline-block;
+    margin: 0;
+}
+
+.action-btn {
+    border: 0;
+    text-decoration: none;
+}
+
+.view-event-card,
+.event-form-card {
+    background: #ffffff;
+    border-radius: 14px;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+}
+
+.student-content > table.event-table-custom {
+    display: table;
+    margin-top: 18px;
+}
+
+.student-content > table.event-table-custom,
+.table-card-custom {
+    border: 1px solid #eef2f7;
+}
+
+.student-content .page-title {
+    color: #1c3f95;
+    font-weight: 800;
+}
+
+.summary-card,
+.table-card-custom,
+.event-form-card,
+.view-event-card {
+    border: 1px solid #eef2f7;
 }

@@ -10,7 +10,7 @@ if (!isset($_SESSION['SESS_USER_ID'])) {
 // 2. DATABASE CONNECTION
 $servername = "localhost";
 $username = "root";
-$password = "";
+$password = "Amni102030.";
 $dbname = "fk_scems_db"; 
 
 $conn = new mysqli($servername, $username, $password, $dbname);
@@ -38,10 +38,26 @@ if (!$user_data) { die("Profile not found."); }
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Profile - FK Student Club</title>
-    <link rel="stylesheet" href="editProfile.css">
+    <link rel="stylesheet" href="editProfile.css?v=profile-nav-2">
+    <style>
+        body {
+            display: block !important;
+            align-items: initial !important;
+            justify-content: initial !important;
+        }
+    </style>
 </head>
 <body>
 
+<?php $profile_role = strtolower($_SESSION['SESS_ROLE'] ?? $_SESSION['role'] ?? ''); ?>
+
+<?php if ($profile_role === 'committee'): ?>
+    <?php include('committeeHeader.php') ?>
+<?php elseif ($profile_role === 'student'): ?>
+    <?php include('studentHeader.php') ?>
+<?php endif; ?>
+
+<main class="profile-page">
 <div class="edit-box">
     <h2>Update Information</h2>
     
@@ -77,11 +93,12 @@ if (!$user_data) { die("Profile not found."); }
         
         <?php 
             // Determine where the "Back" link should go based on role
-            $back_link = ($_SESSION['SESS_ROLE'] == 'Committee') ? "committeeDashboard.php" : "studentDashboard.php";
+            $back_link = ($profile_role === 'committee') ? "committeeDashboard.php" : "studentDashboard.php";
         ?>
         <a href="<?php echo $back_link; ?>" class="btn-cancel">Back to Dashboard</a>
     </form>
 </div>
+</main>
 
 </body>
 </html>

@@ -182,7 +182,7 @@ if ($event) {
         INNER JOIN student s ON s.matric_number = er.matric_number
         LEFT JOIN attendance a ON a.registration_id = er.registration_id
         WHERE er.event_id = ?
-          AND er.registration_status IN ('registered', 'notified')
+          AND er.registration_status = 'registered'
           AND (
                 ? = ''
                 OR s.name LIKE CONCAT('%', ?, '%')

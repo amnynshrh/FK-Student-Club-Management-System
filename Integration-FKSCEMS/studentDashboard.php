@@ -12,7 +12,7 @@ header("Pragma: no-cache");
 // Ensure the database name matches what you used in register.php
 $servername = "localhost";
 $username = "root";
-$password = "";
+$password = "Amni102030.";
 $dbname = "fk_scems_db"; 
 
 $conn = new mysqli($servername, $username, $password, $dbname);

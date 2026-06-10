@@ -24,6 +24,13 @@ if ($matricNumber === "") {
 }
 
 updateEventStatuses($conn);
+mysqli_query($conn, "
+    UPDATE `eventwaitinglist` ew
+    INNER JOIN `event` e ON e.`event_id` = ew.`event_id`
+    SET ew.`waiting_status` = 'cancelled'
+    WHERE ew.`waiting_status` IN ('waiting','notified')
+      AND NOW() >= CONCAT(e.`event_date`, ' ', e.`event_time`)
+");
 
 $sql = "
     SELECT
@@ -40,8 +47,8 @@ $sql = "
         COUNT(er.`registration_id`) AS registered_count,
         MAX(mine.`registration_id`) AS my_registration_id,
         MAX(CASE WHEN mine.`registration_id` IS NOT NULL THEN 1 ELSE 0 END) AS already_registered,
-        MAX(waiting.`registration_id`) AS my_waiting_id,
-        MAX(waiting.`registration_status`) AS my_waiting_status
+        MAX(waiting.`waiting_id`) AS my_waiting_id,
+        MAX(waiting.`waiting_status`) AS my_waiting_status
     FROM `event` e
     INNER JOIN `club` c ON c.`club_id` = e.`club_id`
     LEFT JOIN `eventregistration` er
@@ -51,10 +58,11 @@ $sql = "
         ON mine.`event_id` = e.`event_id`
         AND mine.`matric_number` = ?
         AND mine.`registration_status` = 'registered'
-    LEFT JOIN `eventregistration` waiting
+    LEFT JOIN `eventwaitinglist` waiting
         ON waiting.`event_id` = e.`event_id`
         AND waiting.`matric_number` = ?
-        AND waiting.`registration_status` IN ('waiting', 'notified')
+        AND waiting.`waiting_status` IN ('waiting', 'notified')
+        AND NOW() < CONCAT(e.`event_date`, ' ', e.`event_time`)
     GROUP BY e.`event_id`
     ORDER BY e.`event_date` ASC, e.`event_time` ASC
 ";

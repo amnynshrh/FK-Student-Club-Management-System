@@ -10,7 +10,7 @@ if (!isset($_SESSION['SESS_ROLE']) || $_SESSION['SESS_ROLE'] !== 'Admin') {
 // 2. DATABASE CONNECTION
 $servername = "localhost";
 $username = "root";
-$password = "";
+$password = "Amni102030.";
 $dbname = "fk_scems_db"; 
 
 $conn = new mysqli($servername, $username, $password, $dbname);

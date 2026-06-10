@@ -23,7 +23,7 @@ if (empty($registrationId) || empty($matricNumber)) {
     exit;
 }
 
-mysqli_query($conn, "ALTER TABLE `eventregistration` MODIFY `registration_status` ENUM('registered','cancelled','waiting','notified') NOT NULL");
+mysqli_query($conn, "ALTER TABLE `eventregistration` MODIFY `registration_status` ENUM('registered','cancelled') NOT NULL");
 
 $eventSql = "
     SELECT `event_id`
@@ -41,8 +41,7 @@ $eventRow = mysqli_fetch_assoc($eventResult);
 
 $sql = "
     UPDATE `eventregistration`
-    SET `registration_status` = 'cancelled',
-        `confirmation_status` = 'pending'
+    SET `registration_status` = 'cancelled'
     WHERE `registration_id` = ?
       AND `matric_number` = ?
       AND `registration_status` = 'registered'
@@ -92,11 +91,12 @@ function notifyNextWaitingStudent($conn, $eventId)
     }
 
     $notifySql = "
-        UPDATE `eventregistration`
-        SET `registration_status` = 'notified'
+        UPDATE `eventwaitinglist`
+        SET `waiting_status` = 'notified',
+            `notified_at` = NOW()
         WHERE `event_id` = ?
-          AND `registration_status` = 'waiting'
-        ORDER BY `registration_date` ASC
+          AND `waiting_status` = 'waiting'
+        ORDER BY `joined_at` ASC
         LIMIT 1
     ";
 

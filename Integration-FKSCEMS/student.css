@@ -462,6 +462,12 @@ table.event-table tbody tr:hover {
     color: #9a3412;
 }
 
+.status-badge.notified {
+    background-color: #eef4ff;
+    border: 1px solid #1c3f95;
+    color: #1c3f95;
+}
+
 .status-badge.waiting-list,
 .status-badge.slot-available {
     background-color: #fff7ed;
@@ -611,6 +617,30 @@ table.event-table tbody tr:hover {
     background-color: #1c3f95;
     border-color: #1c3f95;
     color: #ffffff;
+}
+
+.btn-register-event.registered-disabled {
+    background-color: #eef2f7;
+    border-color: #dbdae3;
+    color: #6f7287;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.btn-register-event.notified-disabled {
+    background-color: #eef4ff;
+    border-color: #1c3f95;
+    color: #1c3f95;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.action-text-muted {
+    color: #6f7287;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 0 4px;
+    white-space: nowrap;
 }
 
 .btn-waiting-list {
@@ -989,8 +1019,16 @@ table.event-table tbody tr:hover {
     background-color: #009e96;
 }
 
+.status-badge.attend {
+    background-color: #009e96;
+}
+
 .status-badge.late {
     background-color: #f59e0b;
+}
+
+.status-badge.unattend {
+    background-color: #6f7287;
 }
 
 .status-badge.upcoming {
@@ -1026,5 +1064,200 @@ table.event-table tbody tr:hover {
 
     .history-filter-row {
         justify-content: stretch;
+    }
+}
+
+/* =========================================================
+   Student View Event Details Page
+   Same layout as committee view event details
+   ========================================================= */
+
+.view-event-page {
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.view-event-header {
+    margin-bottom: 30px;
+}
+
+.view-event-subtitle {
+    color: #6f7287;
+    font-size: 15px;
+    margin-top: -15px;
+}
+
+.view-event-card {
+    background: #ffffff;
+    border: 1px solid #dbdae3;
+    border-radius: 14px;
+    padding: 40px;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.04);
+}
+
+.view-event-top {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding-bottom: 30px;
+    border-bottom: 1px solid #eeeff2;
+    margin-bottom: 35px;
+}
+
+.view-event-icon {
+    width: 72px;
+    height: 72px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 34px;
+    flex-shrink: 0;
+}
+
+.view-event-icon.navy {
+    color: #1c3f95;
+    background-color: rgba(28, 63, 149, 0.08);
+}
+
+.view-event-icon.teal {
+    color: #009e96;
+    background-color: rgba(0, 158, 150, 0.08);
+}
+
+.view-event-name {
+    font-size: 28px;
+    font-weight: 800;
+    color: #39364f;
+    margin-bottom: 8px;
+}
+
+.view-event-organizer {
+    color: #6f7287;
+    font-size: 15px;
+    margin: 0;
+}
+
+.view-event-organizer i {
+    color: #009e96;
+    margin-right: 6px;
+}
+
+.view-event-details-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 25px;
+}
+
+.view-detail-item {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    border: 1px solid #eeeff2;
+    border-radius: 12px;
+    padding: 22px;
+    background-color: #ffffff;
+    transition: 0.2s;
+}
+
+.view-detail-item:hover {
+    background-color: #fafbfc;
+    border-color: #dbdae3;
+}
+
+.view-detail-icon {
+    width: 54px;
+    height: 54px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    flex-shrink: 0;
+}
+
+.view-detail-icon.navy {
+    color: #1c3f95;
+    background-color: rgba(28, 63, 149, 0.08);
+}
+
+.view-detail-icon.teal {
+    color: #009e96;
+    background-color: rgba(0, 158, 150, 0.08);
+}
+
+.view-detail-label {
+    color: #6f7287;
+    font-size: 14px;
+    margin-bottom: 4px;
+    font-weight: 500;
+}
+
+.view-detail-value {
+    color: #39364f;
+    font-size: 16px;
+    font-weight: 700;
+    margin: 0;
+}
+
+.view-event-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+    margin-top: 40px;
+    padding-top: 30px;
+    border-top: 1px solid #eeeff2;
+}
+
+.view-event-back-btn {
+    background-color: transparent;
+    border: 1px solid #dbdae3;
+    color: #39364f;
+    padding: 12px 28px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.view-event-back-btn:hover {
+    background-color: #f8f8fa;
+    color: #39364f;
+}
+
+@media (max-width: 992px) {
+    .view-event-details-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .view-event-card {
+        padding: 25px;
+    }
+
+    .view-event-top {
+        align-items: flex-start;
+    }
+
+    .view-event-name {
+        font-size: 24px;
+    }
+
+    .view-detail-item {
+        padding: 18px;
+    }
+
+    .view-event-actions {
+        flex-direction: column;
+    }
+
+    .view-event-back-btn {
+        width: 100%;
+        justify-content: center;
     }
 }

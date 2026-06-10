@@ -64,6 +64,7 @@ $conn->close();
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -85,6 +86,7 @@ $conn->close();
         .error-box { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; padding: 12px; margin-bottom: 20px; border-radius: 8px; text-align: center; font-weight: 600; }
     </style>
 </head>
+
 <body>
 
 <div class="main-container" style="max-width: 450px; margin: 100px auto; background: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
@@ -122,11 +124,14 @@ $conn->close();
             </div>
 
             <button type="submit" class="btn-submit">Sign In</button>
-            
-            
+
+            <p class="register-link">
+                <a href="register.php">Register New Account</a>
+            </p>
         </form>
     </div>
 </div>
 
 </body>
+
 </html>
