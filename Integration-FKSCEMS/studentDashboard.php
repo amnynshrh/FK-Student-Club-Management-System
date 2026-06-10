@@ -49,7 +49,10 @@ if ($stmt) {
 $club_count = 0;
 if ($user_data) {
     $matric = $user_data['matric_number'];
-    $sql_clubs = "SELECT COUNT(*) as total FROM membership WHERE matric_number = ? AND membership_status = 'Active'";
+    $sql_clubs = "SELECT COUNT(*) as total 
+                  FROM membership
+                  WHERE matric_number = ? 
+                  AND membership_status = 'Active'";
     $stmt_c = $conn->prepare($sql_clubs);
     if ($stmt_c) {
         $stmt_c->bind_param("s", $matric);
@@ -57,6 +60,42 @@ if ($user_data) {
         $club_count = $stmt_c->get_result()->fetch_assoc()['total'];
     }
 }
+
+//total points calculation for the student
+$user_id = $_SESSION['user_id']; 
+$sql_points = "SELECT SUM(a.point_awarded) as total_points 
+               FROM student s
+               JOIN eventregistration er ON s.matric_number = er.matric_number
+               JOIN attendance a ON er.registration_id = a.registration_id
+               WHERE s.user_id = ?";
+
+$stmt_points = $conn->prepare($sql_points);
+$stmt_points->bind_param("i", $user_id);
+$stmt_points->execute();
+$result_points = $stmt_points->get_result();
+$total_student_points = 0;
+if ($result_points && $row = $result_points->fetch_assoc()) {
+    // If they haven't attended events yet, SUM() returns NULL, so we use ?? 0
+    $total_student_points = $row['total_points'] ?? 0; 
+}
+
+// Fetch club memberships with position and status for the logged-in student
+$user_id = $_SESSION['user_id'];
+$sql_clubs = "SELECT 
+                c.club_name,
+                COALESCE(com.position, 'Member') AS club_position,
+                m.membership_status
+              FROM student s
+              JOIN membership m ON s.matric_number = m.matric_number
+              JOIN club c ON m.club_id = c.club_id
+              LEFT JOIN committee com ON m.membership_id = com.membership_id
+              WHERE s.user_id = ?";
+
+$stmt_clubs = $conn->prepare($sql_clubs);
+$stmt_clubs->bind_param("i", $user_id);
+$stmt_clubs->execute();
+$result_clubs = $stmt_clubs->get_result();
+
 ?>
 
 <!DOCTYPE html>
@@ -98,7 +137,7 @@ if ($user_data) {
         <div class="metric-card">
             <div class="metric-info">
                 <span class="metric-label">My Merit Points</span>
-                <h3 class="metric-value">120</h3>
+                <h3 class="metric-value"><?php echo $total_student_points; ?></h3>
             </div>
             <div class="metric-icon-box blue-icon">⭐</div>
         </div>
@@ -112,7 +151,7 @@ if ($user_data) {
     </div>
 
     <div class="user-grid">
-        <div class="table-container">
+       <div class="table-container">
             <h3 class="card-title">My Registered Clubs</h3>
             <table class="member-table">
                 <thead>
@@ -124,12 +163,28 @@ if ($user_data) {
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td><strong>FK Coding Club</strong></td>
-                        <td>Member</td>
-                        <td><span class="badge student-badge">Active</span></td>
-                        <td><button class="action-btn edit">View Club</button></td>
-                    </tr>
+                    <?php if ($result_clubs && $result_clubs->num_rows > 0): ?>
+                    <?php while ($club = $result_clubs->fetch_assoc()): ?>
+                        <tr>
+                            <td><strong><?php echo htmlspecialchars($club['club_name']); ?></strong></td>
+                             <td><?php echo htmlspecialchars($club['club_position']); ?></td>
+                             <td>
+                                <span class="badge student-badge <?php echo htmlspecialchars(strtolower($club['membership_status'])); ?>">
+                                     <?php echo htmlspecialchars(ucfirst($club['membership_status'])); ?>
+                                </span>
+                            </td>
+                            <td>
+                                <button class="action-btn edit">View Club</button>
+                            </td>
+                        </tr>
+                    <?php endwhile; ?>
+                    <?php else: ?>
+                        <tr>
+                            <td colspan="4" style="text-align: center; padding: 15px; color: #666;">
+                                You have not registered for any clubs yet.
+                            </td>
+                        </tr>
+                    <?php endif; ?>
                 </tbody>
             </table>
         </div>
