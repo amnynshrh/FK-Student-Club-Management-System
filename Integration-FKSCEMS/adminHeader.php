@@ -7,6 +7,29 @@ $current_page = basename($_SERVER['PHP_SELF']);
 
 $current_page = basename($_SERVER['PHP_SELF']);
 
+// FIXED: Session keys changed to match your login script ('user_id' and 'username')
+$admin_name = $user_data['name'] ?? $_SESSION['name'] ?? $_SESSION['username'] ?? '';
+
+if ($admin_name === '' && !empty($_SESSION['user_id'])) {
+    $header_conn = $conn ?? null;
+    if (!$header_conn && file_exists(__DIR__ . '/config/db.php')) {
+        require __DIR__ . '/config/db.php';
+        $header_conn = $conn ?? null;
+    }
+
+    if ($header_conn) {
+        // Correctly targets the admin table name column
+        $header_stmt = mysqli_prepare($header_conn, "SELECT a.name FROM admin a WHERE a.user_id = ? LIMIT 1");
+        mysqli_stmt_bind_param($header_stmt, 'i', $_SESSION['user_id']); // FIXED key here
+        mysqli_stmt_execute($header_stmt);
+        $header_user = mysqli_fetch_assoc(mysqli_stmt_get_result($header_stmt));
+        $admin_name = $header_user['name'] ?? '';
+    }
+}
+
+if ($admin_name === '') {
+    $admin_name = $_SESSION['username'] ?? 'Admin'; // FIXED fallback key here
+}
 ?>
 <nav class="top-navigation">
     <div class="nav-wrapper">
@@ -129,7 +152,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
         <div class="admin-profile">
             <span>
                 Admin:
-                <?php echo htmlspecialchars($_SESSION['SESS_USERNAME'] ?? 'Administrator'); ?>
+                <?php echo htmlspecialchars($admin_name); ?>
             </span>
         </div>
     </div>
