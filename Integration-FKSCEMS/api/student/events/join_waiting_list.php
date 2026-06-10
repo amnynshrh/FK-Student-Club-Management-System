@@ -3,6 +3,7 @@ session_start();
 header("Content-Type: application/json");
 
 require_once "../../../config/db.php";
+require_once "../../../config/event_status.php";
 
 if (!isset($_SESSION["Login"]) || $_SESSION["Login"] !== "YES" || ($_SESSION["role"] ?? "") !== "student") {
     echo json_encode([
@@ -23,11 +24,32 @@ if (empty($eventId) || empty($matricNumber)) {
     exit;
 }
 
-mysqli_query($conn, "ALTER TABLE `eventregistration` MODIFY `registration_status` ENUM('registered','cancelled','waiting','notified') NOT NULL");
+mysqli_query($conn, "ALTER TABLE `eventregistration` MODIFY `registration_status` ENUM('registered','cancelled') NOT NULL");
+mysqli_query($conn, "
+    CREATE TABLE IF NOT EXISTS `eventwaitinglist` (
+        `waiting_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+        `matric_number` VARCHAR(10) NOT NULL,
+        `event_id` INT UNSIGNED NOT NULL,
+        `waiting_status` ENUM('waiting','notified') NOT NULL DEFAULT 'waiting',
+        `joined_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        `notified_at` DATETIME DEFAULT NULL,
+        PRIMARY KEY (`waiting_id`),
+        UNIQUE KEY `unique_student_event_waiting` (`matric_number`, `event_id`)
+    )
+");
+mysqli_query($conn, "
+    UPDATE `eventwaitinglist` ew
+    INNER JOIN `event` e ON e.`event_id` = ew.`event_id`
+    SET ew.`waiting_status` = 'cancelled'
+    WHERE ew.`waiting_status` IN ('waiting','notified')
+      AND NOW() >= CONCAT(e.`event_date`, ' ', e.`event_time`)
+");
 
 $checkSql = "
     SELECT
         e.`event_status`,
+        e.`event_date`,
+        e.`event_time`,
         e.`max_participant`,
         COUNT(er.`registration_id`) AS registered_count
     FROM `event` e
@@ -52,7 +74,7 @@ if (!$event) {
     exit;
 }
 
-if (in_array($event["event_status"], ["completed", "cancelled"])) {
+if (in_array($event["event_status"], ["completed", "cancelled", "ongoing"]) || date('Y-m-d H:i:s') >= $event["event_date"] . " " . $event["event_time"]) {
     echo json_encode([
         "success" => false,
         "message" => "This event is closed."
@@ -91,36 +113,14 @@ if ($existing && $existing["registration_status"] === "registered") {
     exit;
 }
 
-if ($existing && in_array($existing["registration_status"], ["waiting", "notified"])) {
-    echo json_encode([
-        "success" => true,
-        "message" => "You are already in the waiting list."
-    ]);
-    exit;
-}
+$waitingSql = "
+    INSERT INTO `eventwaitinglist` (`matric_number`, `event_id`, `waiting_status`, `joined_at`)
+    SELECT ?, ?, 'waiting', NOW()
+    ON DUPLICATE KEY UPDATE `waiting_status` = 'waiting', `joined_at` = NOW(), `notified_at` = NULL
+";
 
-if ($existing && $existing["registration_status"] === "cancelled") {
-    $waitingSql = "
-        UPDATE `eventregistration`
-        SET `registration_status` = 'waiting',
-            `confirmation_status` = 'pending',
-            `registration_date` = NOW()
-        WHERE `registration_id` = ?
-          AND `matric_number` = ?
-    ";
-
-    $waitingStmt = mysqli_prepare($conn, $waitingSql);
-    mysqli_stmt_bind_param($waitingStmt, "is", $existing["registration_id"], $matricNumber);
-} else {
-    $waitingSql = "
-        INSERT INTO `eventregistration`
-        (`matric_number`, `event_id`, `registration_status`, `confirmation_status`)
-        VALUES (?, ?, 'waiting', 'pending')
-    ";
-
-    $waitingStmt = mysqli_prepare($conn, $waitingSql);
-    mysqli_stmt_bind_param($waitingStmt, "si", $matricNumber, $eventId);
-}
+$waitingStmt = mysqli_prepare($conn, $waitingSql);
+mysqli_stmt_bind_param($waitingStmt, "si", $matricNumber, $eventId);
 
 if (mysqli_stmt_execute($waitingStmt)) {
     echo json_encode([

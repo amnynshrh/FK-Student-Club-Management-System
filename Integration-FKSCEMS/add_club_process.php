@@ -1,35 +1,31 @@
 <?php
-$conn = new mysqli("localhost", "root", "", "fk_scems_db");
-
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
+require_once 'config/db.php';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    
+
     // 1. Sanitize standard string input data fields
     $clubName    = $_POST['clubName'];
     $description = $_POST['clubDescription'];
     $advisorName = $_POST['advisorName'];
-    $status      = "Active"; 
+    $status      = "Active";
 
     $memberNames  = $_POST['member_names'] ?? [];
-    $memberMatric = $_POST['member_matricnum'] ?? []; 
+    $memberMatric = $_POST['member_matricnum'] ?? [];
     $memberRoles  = $_POST['member_roles'] ?? [];
-    
+
     // Insert into club table
     $stmt = $conn->prepare("INSERT INTO club (club_name, description, advisor_name, club_status) VALUES (?,?,?,?)");
     $stmt->bind_param("ssss", $clubName, $description, $advisorName, $status);
     $stmt->execute();
-    
+
     // Capture the newly generated club_id for the relationships
-    $club_id = $conn->insert_id; 
+    $club_id = $conn->insert_id;
     $stmt->close();
 
     // ==========================================
     // START: COMMITTEES & MEMBERSHIPS HANDLER
     // ==========================================
-    
+
     // Verify that the given matric number exists in the student directory registry
     $stmt_user = $conn->prepare("SELECT user_id FROM student WHERE matric_number = ?");
 
@@ -44,13 +40,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     // Loop through the array of submitted matric numbers
     foreach ($memberMatric as $index => $matric_num) {
-        
+
         $matric_num = trim($matric_num);
         // Skip empty input lines
         if (empty($matric_num)) {
             continue;
         }
-        
+
         // Grab the corresponding role or set a default
         $role = !empty($memberRoles[$index]) ? trim($memberRoles[$index]) : 'Committee Member';
 
@@ -61,7 +57,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         if ($row_user = $result_user->fetch_assoc()) {
             // Student is valid! Now look up if they already hold membership parameters inside this specific club
-            
+
             // STEP B: FIXED bind data parameter map (Changed $user_id to string $matric_num to match the query pattern)
             $stmt_check_member->bind_param("si", $matric_num, $club_id);
             $stmt_check_member->execute();
@@ -99,9 +95,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // ==========================================
 
     // Output Success View Dashboard UI
-    ?>
+?>
     <!DOCTYPE html>
     <html lang="en">
+
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -109,10 +106,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <link rel="stylesheet" href="style.css">
         <style>
             .modal-overlay {
-                display: flex !important; 
+                display: flex !important;
             }
         </style>
     </head>
+
     <body>
 
         <div id="successModal" class="modal-overlay">
@@ -134,8 +132,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             }
         </script>
     </body>
+
     </html>
-    <?php
+<?php
 } else {
     echo "Invalid Access Request Method.";
 }

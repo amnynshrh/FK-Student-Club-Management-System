@@ -3,6 +3,7 @@ session_start();
 header("Content-Type: application/json");
 
 require_once "../../../config/db.php";
+require_once "../../../config/event_status.php";
 
 if (!isset($_SESSION["Login"]) || $_SESSION["Login"] !== "YES" || ($_SESSION["role"] ?? "") !== "student") {
     echo json_encode([

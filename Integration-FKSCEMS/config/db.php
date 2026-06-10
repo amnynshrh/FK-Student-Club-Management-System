@@ -3,7 +3,7 @@
 define('DB_HOST', 'localhost');
 define('DB_NAME', 'fk_scems_db');
 define('DB_USER', 'root');
-define('DB_PASS', '');
+define('DB_PASS', 'Amni102030.');
 define('DB_CHARSET', 'utf8mb4');
 
 $conn = mysqli_connect(DB_HOST, DB_USER, DB_PASS, DB_NAME);
