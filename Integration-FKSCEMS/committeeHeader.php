@@ -37,7 +37,8 @@ $manage_active = in_array($current_page, $manage_pages, true) ? 'active' : '';
     <div class="nav-wrapper">
         <div class="nav-left">
             <img
-                src="assets/images/logo-fk.png"
+                src="fk.png"
+                width="200"
                 alt="FK Logo"
                 class="nav-logo">
             <div class="nav-brand">

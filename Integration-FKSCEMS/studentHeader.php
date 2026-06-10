@@ -12,7 +12,7 @@ $event_pages = [
 <nav class="top-navigation">
     <div class="nav-wrapper">
         <div class="nav-left">
-            <img src="assets/images/logo-fk.png" alt="FK Logo" class="nav-logo">
+            <img src="fk.png" width="200" alt="FK Logo" class="nav-logo">
             <div class="nav-brand">
                 FK Student Club &<br>Event Management System
             </div>

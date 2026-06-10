@@ -48,7 +48,7 @@ if (!$user_data) {
 <body>
 
 <div class="edit-box">
-    <h2>Update Information</h2>
+    <h2>Update Profile</h2>
     
     <div style="text-align: center; margin-bottom: 15px;">
         <img src="uploads/<?php echo htmlspecialchars($user_data['profile_photo'] ?? 'default.png'); ?>" 
