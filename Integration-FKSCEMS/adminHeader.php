@@ -133,10 +133,10 @@ if ($admin_name === '') {
             </li>
             <li>
                 <a
-                    href="logout.php"
+                     href="logout.php"
                     class="logout-link"
-                    style="color: red;"
-                  >  Logout
+                    style="color: red;">
+                    Logout
                 </a>
             </li>
         </ul>

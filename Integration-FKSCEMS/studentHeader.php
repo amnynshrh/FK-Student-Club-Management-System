@@ -69,7 +69,9 @@ if ($student_name === '') {
                 </a>
             </li>
             <li>
-                <a href="logout.php" class="logout-link" style="color: red; font-weight: 700">
+                <a  href="logout.php"
+                    class="logout-link"
+                    style="color: red;">
                     Logout
                 </a>
             </li>
