@@ -29,9 +29,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $hashed_pass     = password_hash($plain_pass, PASSWORD_DEFAULT);
     
     $contact         = $_POST['contactNo'];
-    $role            = $_POST['role'];
+    $role            = strtolower(trim($_POST['role']));
     $course          = $_POST['course']; 
-    $status          = "Active";
+    $status          = "active";
 
     // 3. FILE UPLOAD LOGIC
     $target_dir = "uploads/";

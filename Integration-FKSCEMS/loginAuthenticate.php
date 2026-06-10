@@ -17,9 +17,11 @@ if ($conn->connect_error) {
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $input_user = trim($_POST['username']);
     $input_pass = $_POST['password']; 
-    $input_role = $_POST['role']; // The role selected in the login form dropdown
+    
+    // Enforce lowercase to match your database ENUM constraints securely
+    $input_role = strtolower(trim($_POST['role'])); 
 
-    // CHANGED: Search ONLY by username so we can fetch Committee accounts even when they select "Student"
+    // Search ONLY by username so we can fetch Committee accounts even when they select "Student"
     $sql = "SELECT user_id, username, password, role FROM user WHERE username = ?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("s", $input_user);
@@ -28,36 +30,40 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     if ($result->num_rows === 1) {
         $user = $result->fetch_assoc();
-        $db_role = $user['role']; // The actual role saved in your database user table
+        
+        // Convert the database value to lowercase to protect against casing conflicts
+        $db_role = strtolower($user['role']); 
 
         // Verify the plain text password against the securely encrypted database hash
         if (password_verify($input_pass, $user['password'])) {
             
-            // 3. ROLE VALIDATION LOGIC (With dual-role exception for Committee)
+            // 3. ROLE VALIDATION LOGIC (FIXED CASE MATCHING)
             $access_granted = false;
 
             if ($input_role === $db_role) {
-                // Scenario A: Exact match (Student logs in as Student, Committee logs in as Committee, etc.)
+                // Scenario A: Exact match (student logs in as student, committee logs in as committee, etc.)
                 $access_granted = true;
-            } elseif ($db_role === 'Committee' && $input_role === 'Student') {
+            } elseif ($db_role === 'committee' && $input_role === 'student') {
                 // Scenario B: Dual-role authorization bypass
-                // Database says they are a Committee member, but they selected "Student" in the form.
+                // Database says they are a committee member, but they selected "student" in the form.
                 $access_granted = true;
                 
-                // Override the role variable so they get treated as a Student for this session
-                $db_role = 'Student'; 
+                // Override the variable so they get treated as a student for this session
+                $db_role = 'student'; 
             }
 
             if ($access_granted) {
                 // Credentials match and role is authorized! Save tracking keys to Session
                 $_SESSION['user_id']  = $user['user_id'];
                 $_SESSION['username'] = $user['username'];
-                $_SESSION['role']     = $db_role; // Stores 'Student' if the bypass was triggered
+                
+                // Capitalize the first letter (e.g. 'Student', 'Committee') so it satisfies your Dashboard check expectations
+                $_SESSION['role']     = ucfirst($db_role); 
 
-                // Role-based redirection based on the authorized session role
-                if ($db_role === 'Admin') {
+                // Role-based redirection based on the authorized lowercase context
+                if ($db_role === 'admin') {
                     header("Location: admin.php");
-                } elseif ($db_role === 'Committee') {
+                } elseif ($db_role === 'committee') {
                     header("Location: committeeDashboard.php");
                 } else {
                     // Real students and Committee members logging in as students land here
