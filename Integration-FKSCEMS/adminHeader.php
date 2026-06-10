@@ -12,9 +12,10 @@ $current_page = basename($_SERVER['PHP_SELF']);
     <div class="nav-wrapper">
         <div class="nav-left">
             <img 
-                src="assets/images/logo-fk.png"
+                src="fk.png"
                 alt="FK Logo"
                 class="nav-logo"
+                width="200"
             >
             <div class="nav-brand">
                 FK Student Club &<br>

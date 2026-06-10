@@ -39,15 +39,7 @@
 </head>
 <body>
 
-<nav class="top-navigation">
-    <div class="nav-wrapper">
-        <div class="logo"><img src="fk.png" alt="FK Logo"></div>
-        <ul class="menu-links">
-            <li><a href="adminRegister.php" class="active">Register</a></li>
-        </ul>
-        <div class="admin-profile"><span>FK Admin</span></div>
-    </div>
-</nav>
+<?php include('adminHeader.php') ?>
 
 <div class="page-container">
     <div class="register-container">

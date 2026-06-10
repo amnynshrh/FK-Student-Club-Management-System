@@ -107,9 +107,9 @@ $conn->close();
 <div class="main-container" style="max-width: 600px; margin: 50px auto; background: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
     <div class="form-box">
         <div class="header" style="text-align: center; margin-bottom: 25px;">
-            <img src="fk.png" alt="Logo" class="logo" style="width: 80px;">
-            <h2>Register New Member</h2>
-            <p>Admin Registration Management</p>
+            <img src="fk.png" alt="Logo" class="logo" style="width: 300px;">
+            <h2>Register New Student</h2>
+
         </div>
 
         <?php echo $message; ?>
