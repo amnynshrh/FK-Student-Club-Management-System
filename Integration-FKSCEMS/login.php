@@ -4,7 +4,7 @@ session_start();
 
 $servername = "localhost";
 $username = "root";
-$password = "";
+$password = "Amni102030.";
 $dbname = "fk_scems_db";
 
 $conn = new mysqli($servername, $username, $password, $dbname);
@@ -23,7 +23,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $input_role = $_POST['role']; 
 
     // Search by username AND the selected role for strict access control
-    $sql = "SELECT user_id, username, password, role FROM user WHERE username = ? AND role = ?";
+    $sql = "SELECT user_id, username, password, role FROM user WHERE username = ? AND LOWER(role) = LOWER(?)";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("ss", $input_user, $input_role);
     $stmt->execute();
@@ -32,18 +32,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if ($result->num_rows === 1) {
         $user = $result->fetch_assoc();
 
-        // Verify the plain text password against the securely encrypted database hash
-        if (password_verify($input_pass, $user['password'])) {
+        // Accept hashed passwords and existing plain seed passwords used in the local DB.
+        if (password_verify($input_pass, $user['password']) || hash_equals((string)$user['password'], $input_pass)) {
             
             // Credentials match! Save critical tracking keys to the active Session state
             $_SESSION['user_id']  = $user['user_id'];
             $_SESSION['username'] = $user['username'];
             $_SESSION['role']     = $user['role'];
+            $_SESSION['Login'] = 'YES';
+            $_SESSION['SESS_USER_ID'] = $user['user_id'];
+            $_SESSION['SESS_USERNAME'] = $user['username'];
+            $_SESSION['SESS_ROLE'] = $user['role'];
 
             // INSTANT SERVER-SIDE REDIRECTION (No Popups)
-            if ($user['role'] === 'Admin') {
+            $role = strtolower((string)$user['role']);
+            if ($role === 'admin') {
                 header("Location: admin.php");
-            } elseif ($user['role'] === 'Committee') {
+            } elseif ($role === 'committee') {
                 header("Location: committeeDashboard.php");
             } else {
                 header("Location: studentDashboard.php");

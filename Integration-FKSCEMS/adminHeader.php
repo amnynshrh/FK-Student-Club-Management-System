@@ -94,6 +94,14 @@ $current_page = basename($_SERVER['PHP_SELF']);
             </li>
             <li>
                 <a 
+                    href="event_dashboard.php"
+                    class="<?php echo ($current_page == 'event_dashboard.php') ? 'active' : ''; ?>"
+                >
+                    Event Dashboard
+                </a>
+            </li>
+            <li>
+                <a 
                     href="attendance_dashboard.php"
                     class="<?php echo ($current_page == 'attendance_dashboard.php') ? 'active' : ''; ?>"
                 >
