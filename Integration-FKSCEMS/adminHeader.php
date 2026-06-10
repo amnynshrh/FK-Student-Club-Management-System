@@ -222,6 +222,7 @@ if ($admin_name === '') {
 .admin-profile {
     font-weight: bold;
     color: var(--fk-blue);
+   
 }
 
 .dropdown {
