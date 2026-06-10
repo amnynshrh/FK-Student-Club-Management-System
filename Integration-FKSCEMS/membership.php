@@ -57,21 +57,7 @@ $total_pending = $conn->query($pending_query)->fetch_assoc()['total'];
 </head>
 <body>
 
-<nav class="top-navigation">
-    <div class="nav-wrapper">
-        <div class="logo"><img src="fk.png" alt="Logo"></div>
-        <ul class="menu-links">
-            <li><a href="admin.php">Dashboard</a></li>
-            <li><a href="membership.php" class="active">Membership</a></li>
-            <li><a href="#">Club</a></li>
-            <li><a href="#">Events</a></li>
-            <li><a href="logout.php" style="color: #dc3545; font-weight: bold;">Logout</a></li>
-        </ul>
-        <div class="admin-profile">
-            <span>FK Admin: <?php echo htmlspecialchars($_SESSION['username'] ?? 'Admin'); ?></span>
-        </div>
-    </div>
-</nav>
+<?php include('adminHeader.php') ?>
 
 <div class="page-container">
     <header class="page-header">
