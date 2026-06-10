@@ -1,22 +1,23 @@
 <?php
+// 1. SESSION INITIALIZATION
 session_start();
 
-// 1. SESSION GUARD: Matches the keys from authenticate.php
-if (!isset($_SESSION['SESS_ROLE']) || strtolower($_SESSION['SESS_ROLE']) !== 'admin') {
+// 2. CHECK LOGIN & ROLE: Standardized to match login.php session keys
+if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'Admin') {
     header("Location: login.php");
     exit();
 }
 
-// 2. Prevent browser caching
+// 3. Prevent browser caching
 header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
 header("Cache-Control: post-check=0, pre-check=0", false);
 header("Pragma: no-cache");
 
-// 3. Database Connection
+// 4. Database Connection
 $servername = "localhost";
 $username = "root";
-$password = "Amni102030.";
-$dbname = "fk_scems_db"; // Updated to match your actual DB name
+$password = "";
+$dbname = "webTestDB"; 
 
 $conn = new mysqli($servername, $username, $password, $dbname);
 
@@ -24,26 +25,32 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-// 4. Fetch Statistics
+// 5. Fetch Statistics
 // Total Students from user table
-$sql_students = "SELECT COUNT(*) as total FROM user WHERE LOWER(role) = 'student'";
+$sql_committees = "SELECT COUNT(*) as total FROM user WHERE role = 'Committee'";
+$result_committees = $conn->query($sql_committees);
+$total_committees = ($result_committees) ? $result_committees->fetch_assoc()['total'] : 0;
+
+$sql_students = "SELECT COUNT(*) as total FROM user WHERE role = 'Student'";
 $result_students = $conn->query($sql_students);
 $total_students = ($result_students) ? $result_students->fetch_assoc()['total'] : 0;
 
-$sql_clubs = "SELECT COUNT(*) as total FROM club WHERE LOWER(club_status) = 'active'";
-$result_clubs = $conn->query($sql_clubs);
-$total_clubs = ($result_clubs) ? $result_clubs->fetch_assoc()['total'] : 0;
+$sql_admins = "SELECT COUNT(*) as total FROM user WHERE role = 'Admin'";
+$result_admins = $conn->query($sql_admins);
+$total_admins = ($result_admins) ? $result_admins->fetch_assoc()['total'] : 0;
 
-// Inactive student accounts that still need admin attention.
-$sql_pending = "SELECT COUNT(*) as total FROM student WHERE LOWER(status) = 'inactive'";
+$total_clubs = 309; // Hardcoded for now
+
+// Pending Registrations (logic based on user table status)
+$sql_pending = "SELECT COUNT(*) as total FROM student WHERE status = 'Pending'";
 $result_pending = $conn->query($sql_pending);
 $total_pending = ($result_pending) ? $result_pending->fetch_assoc()['total'] : 0;
 
-// 5. Fetch Recent Registrations (Joining user and student for Names)
+// 6. Fetch Recent Registrations (Joining user and student for Names)
 $sql_recent = "SELECT u.username, u.email, u.role, s.name 
                FROM user u 
                LEFT JOIN student s ON u.user_id = s.user_id 
-               WHERE LOWER(u.role) != 'admin'
+               WHERE u.role != 'Admin'
                ORDER BY u.user_id DESC LIMIT 5";
 $recent_result = $conn->query($sql_recent);
 ?>
@@ -63,7 +70,7 @@ $recent_result = $conn->query($sql_recent);
 </head>
 <body>
 
-<?php include('adminHeader.php') ?>
+ <?php include('adminHeader.php') ?>
 
 <div class="page-container">
     <header class="page-header">
@@ -75,7 +82,7 @@ $recent_result = $conn->query($sql_recent);
         <div class="metric-card">
             <div class="metric-info">
                 <span class="metric-label">TOTAL STUDENTS</span>
-                <h3 class="metric-value"><?php echo number_format($total_students); ?></h3>
+                <h3 class="metric-value"><?php echo number_format($total_students + $total_committees); ?></h3>
             </div>
             <div class="metric-icon-box blue-icon">👤</div>
         </div>
@@ -96,12 +103,9 @@ $recent_result = $conn->query($sql_recent);
     </div>
 
     <div class="dashboard-grid">
+       
         <div class="chart-card">
-            <h6>Registration Trends (6 Months)</h6>
-            <canvas id="lineChart"></canvas>
-        </div>
-        <div class="chart-card">
-            <h6>User Participation by Role</h6>
+            <h6>Registered User by Role</h6>
             <div style="height: 250px; display: flex; justify-content: center;">
                 <canvas id="pieChart"></canvas>
             </div>
@@ -110,7 +114,7 @@ $recent_result = $conn->query($sql_recent);
 
     <div class="table-container">
         <div class="table-top-bar">
-            <h3>Recent User Registrations</h3>
+            <h3>Recent User Registrations Details</h3>
         </div>
 
         <div class="table-wrapper">
@@ -134,7 +138,7 @@ $recent_result = $conn->query($sql_recent);
                             echo "<td><strong>" . htmlspecialchars($row['username']) . "</strong></td>";
                             echo "<td>" . htmlspecialchars($row['name'] ?? 'N/A') . "</td>";
                             echo "<td>" . htmlspecialchars($row['email']) . "</td>";
-                            echo "<td><span class='badge $badge'>" . htmlspecialchars(ucfirst((string)$row['role'])) . "</span></td>";
+                            echo "<td><span class='badge $badge'>" . htmlspecialchars($row['role']) . "</span></td>";
                             echo "</tr>";
                         }
                     } else {
@@ -150,30 +154,30 @@ $recent_result = $conn->query($sql_recent);
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>  
 <script>
-    new Chart(document.getElementById('lineChart'), {
-        type: 'line',
-        data: {
-            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-            datasets: [{ 
-                label: 'Registrations', 
-                data: [5, 20, 14, 26, 27, 14], 
-                borderColor: '#004a99', 
-                backgroundColor: 'rgba(0, 74, 153, 0.1)',
-                fill: true,
-                tension: 0.3 
-            }]
-        }
-    });
 
-    new Chart(document.getElementById('pieChart'), {
+   new Chart(document.getElementById('pieChart'), {
         type: 'doughnut',
         data: {
-            labels: ['Committee', 'Student', 'Admin'],
+            labels: [ 'Committee','Student', 'Admin'],
             datasets: [{ 
-                data: [<?php echo $total_pending; ?>, <?php echo $total_students; ?>, 1], 
-                backgroundColor: ['#004a99', '#ffcc00', '#ff061a'],
+                data: [
+                    
+                    <?php echo $total_committees; ?>, 
+                    <?php echo $total_students; ?>, 
+                    <?php echo $total_admins; ?>, 
+                ], 
+                backgroundColor: ['#ffcc00', '#004a99', '#ff061a'],
                 borderWidth: 0
             }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
         }
     });
 </script>
