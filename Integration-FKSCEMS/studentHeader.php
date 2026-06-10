@@ -8,6 +8,28 @@ $event_pages = [
     'student_event_view.php',
 ];
 
+
+$student_name = $user_data['name'] ?? $_SESSION['name'] ?? $_SESSION['user_name'] ?? '';
+if ($student_name === '' && !empty($_SESSION['SESS_USER_ID'])) {
+    $header_conn = $conn ?? null;
+    if (!$header_conn && file_exists(__DIR__ . '/config/db.php')) {
+        require __DIR__ . '/config/db.php';
+        $header_conn = $conn ?? null;
+    }
+
+    if ($header_conn) {
+        $header_stmt = mysqli_prepare($header_conn, "SELECT s.name FROM student s WHERE s.user_id = ? LIMIT 1");
+        mysqli_stmt_bind_param($header_stmt, 'i', $_SESSION['SESS_USER_ID']);
+        mysqli_stmt_execute($header_stmt);
+        $header_user = mysqli_fetch_assoc(mysqli_stmt_get_result($header_stmt));
+        $student_name = $header_user['name'] ?? '';
+    }
+}
+
+if ($student_name === '') {
+    $student_name = $_SESSION['SESS_USERNAME'] ?? 'Student';
+}
+
 ?>
 <nav class="top-navigation">
     <div class="nav-wrapper">
@@ -57,7 +79,7 @@ $event_pages = [
         <div class="admin-profile">
             <span>
                 Student: 
-                <?php echo htmlspecialchars($_SESSION['SESS_USERNAME'] ?? 'Student'); ?>
+                <?php echo htmlspecialchars($student_name); ?>
             </span>
         </div>
     </div>
