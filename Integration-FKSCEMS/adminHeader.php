@@ -1,13 +1,6 @@
 <?php
 
 $current_page = basename($_SERVER['PHP_SELF']);
-
-?>
-<?php
-
-$current_page = basename($_SERVER['PHP_SELF']);
-
-// FIXED: Session keys changed to match your login script ('user_id' and 'username')
 $admin_name = $user_data['name'] ?? $_SESSION['name'] ?? $_SESSION['username'] ?? '';
 
 if ($admin_name === '' && !empty($_SESSION['user_id'])) {
@@ -30,6 +23,7 @@ if ($admin_name === '' && !empty($_SESSION['user_id'])) {
 if ($admin_name === '') {
     $admin_name = $_SESSION['username'] ?? 'Admin'; // FIXED fallback key here
 }
+
 ?>
 <nav class="top-navigation">
     <div class="nav-wrapper">
