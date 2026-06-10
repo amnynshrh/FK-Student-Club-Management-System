@@ -1,95 +1,97 @@
-/* General Reset */
 * {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Segoe UI', sans-serif;
 }
 
 body {
-    background-color: #f4f7f9; /* Light grey-blue background */
+    background-color: #f4f7f9;
     display: flex;
     justify-content: center;
     align-items: center;
     min-height: 100vh;
+    padding: 20px;
 }
 
-/* The white box containing the form */
+.main-container {
+    width: 100%;
+    max-width: 600px;
+}
+
 .form-box {
     background: #ffffff;
     padding: 40px;
-    border-radius: 12px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-    width: 100%;
-    max-width: 400px; /* Slightly narrower for login */
+    border-radius: 15px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+}
+
+.header {
     text-align: center;
+    margin-bottom: 30px;
 }
 
 .logo {
-    width: 160px;
+    width: 150px;
     margin-bottom: 15px;
 }
 
 .header h2 {
-    color: #004a99; /* UMPSA Blue */
-    margin-bottom: 5px;
-    font-size: 22px;
+    color: #004a99;
+    font-size: 24px;
 }
 
 .header p {
     color: #666;
     font-size: 14px;
-    margin-bottom: 25px;
 }
 
-/* Form Styling */
 .input-group {
-    margin-bottom: 20px;
-    text-align: left;
+    margin-bottom: 15px;
+    flex: 1;
 }
 
 .input-group label {
     display: block;
     font-weight: 600;
     font-size: 14px;
-    margin-bottom: 8px;
+    margin-bottom: 5px;
     color: #333;
 }
 
 .input-group input, .input-group select {
     width: 100%;
-    padding: 12px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
     font-size: 14px;
-    transition: border-color 0.3s;
 }
 
-.input-group input:focus {
-    border-color: #004a99;
-    outline: none;
+.row {
+    display: flex;
+    gap: 15px;
 }
 
-/* Button Styling */
 .btn-submit {
     width: 100%;
     padding: 12px;
     background-color: #004a99;
     color: white;
     border: none;
-    border-radius: 6px;
+    border-radius: 5px;
     font-size: 16px;
     font-weight: bold;
     cursor: pointer;
-    transition: background 0.3s;
+    margin-top: 10px;
+    transition: 0.3s;
 }
 
 .btn-submit:hover {
     background-color: #003366;
 }
 
-/* Links at the bottom */
 .footer-link {
+    text-align: center;
     margin-top: 20px;
     font-size: 14px;
     color: #666;
@@ -99,8 +101,4 @@ body {
     color: #004a99;
     text-decoration: none;
     font-weight: bold;
-}
-
-.footer-link a:hover {
-    text-decoration: underline;
 }
