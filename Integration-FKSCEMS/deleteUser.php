@@ -11,7 +11,7 @@ if (!isset($_SESSION['SESS_ROLE']) || $_SESSION['SESS_ROLE'] !== 'Admin') {
 $servername = "localhost";
 $username = "root";
 $password = "";
-$dbname = "webTestDB"; 
+$dbname = "fk_scems_db"; 
 
 $conn = new mysqli($servername, $username, $password, $dbname);
 

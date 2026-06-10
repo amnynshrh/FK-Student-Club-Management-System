@@ -4,7 +4,7 @@ session_start();
 $servername = "localhost";
 $username = "root";
 $password = "";
-$dbname = "webTestDB";
+$dbname = "fk_scems_db";
 
 $conn = new mysqli($servername, $username, $password, $dbname);
 
