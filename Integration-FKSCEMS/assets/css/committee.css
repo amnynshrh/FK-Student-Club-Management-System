@@ -696,6 +696,10 @@ table.event-table tbody tr:hover {
   color: #1c3f95;
 }
 
+.cancel-btn {
+  color: #f59e0b;
+}
+
 .delete-btn {
   color: #ff4d4f;
 }

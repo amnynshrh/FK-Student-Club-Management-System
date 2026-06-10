@@ -17,17 +17,17 @@ require_once 'config/db.php';
 
 // Fetch Metrics using the new table structure
 // Count Students
-$student_query = "SELECT COUNT(*) as total FROM user WHERE role = 'Student'";
+$student_query = "SELECT COUNT(*) as total FROM user WHERE LOWER(role) = 'student'";
 $count_students = $conn->query($student_query)->fetch_assoc()['total'];
 
 // Count Committees
-$committee_query = "SELECT COUNT(*) as total FROM user WHERE role = 'Committee'";
+$committee_query = "SELECT COUNT(*) as total FROM user WHERE LOWER(role) = 'committee'";
 $count_committees = $conn->query($committee_query)->fetch_assoc()['total'];
 
 $total_combined = $count_students + $count_committees;
 
 // Count Pending (Looking at student table status)
-$pending_query = "SELECT COUNT(*) as total FROM student WHERE status = 'Pending'";
+$pending_query = "SELECT COUNT(*) as total FROM student WHERE LOWER(status) = 'inactive'";
 $total_pending = $conn->query($pending_query)->fetch_assoc()['total'];
 ?>
 <!DOCTYPE html>
@@ -122,7 +122,7 @@ $total_pending = $conn->query($pending_query)->fetch_assoc()['total'];
                         $sql = "SELECT u.user_id, u.email, u.role, s.matric_number, s.name, s.status 
                             FROM user u 
                             LEFT JOIN student s ON u.user_id = s.user_id 
-                            WHERE u.role != 'Admin'";
+                            WHERE LOWER(u.role) != 'admin'";
 
                         if ($search != '') {
                             $sql .= " AND (s.matric_number LIKE '%$search%' OR s.name LIKE '%$search%')";
@@ -134,14 +134,14 @@ $total_pending = $conn->query($pending_query)->fetch_assoc()['total'];
                         if ($result && $result->num_rows > 0) {
                             while ($row = $result->fetch_assoc()) {
                                 $uid = $row['user_id'];
-                                $role_class = ($row['role'] == 'Committee') ? "committee-badge" : "student-badge";
+                                $role_class = (strtolower((string)$row['role']) == 'committee') ? "committee-badge" : "student-badge";
 
                                 echo "<tr>";
                                 echo "<td><strong>" . htmlspecialchars($row['matric_number'] ?? 'N/A') . "</strong></td>";
                                 echo "<td>" . htmlspecialchars($row['name'] ?? 'N/A') . "</td>";
                                 echo "<td>" . htmlspecialchars($row['email']) . "</td>";
-                                echo "<td><span class='badge $role_class'>" . htmlspecialchars($row['role']) . "</span></td>";
-                                echo "<td>" . htmlspecialchars($row['status'] ?? 'Active') . "</td>";
+                                echo "<td><span class='badge $role_class'>" . htmlspecialchars(ucfirst((string)$row['role'])) . "</span></td>";
+                                echo "<td>" . htmlspecialchars(ucfirst((string)($row['status'] ?? 'active'))) . "</td>";
                                 echo "<td class='text-center'>
                                     <a href='editUser.php?id=$uid' class='action-btn edit'>Edit</a>
                                     <a href='deleteUser.php?id=$uid' class='action-btn delete' 

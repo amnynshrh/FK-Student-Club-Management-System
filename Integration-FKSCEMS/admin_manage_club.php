@@ -69,7 +69,7 @@ $total_clubs_res = $conn->query("SELECT COUNT(*) as total FROM club");
 $total_clubs = $total_clubs_res->fetch_assoc()['total'] ?? 0;
 
 // Fetch Total Active Clubs
-$active_clubs_res = $conn->query("SELECT COUNT(*) as total FROM club WHERE club_status = 'Active'");
+$active_clubs_res = $conn->query("SELECT COUNT(*) as total FROM club WHERE LOWER(club_status) = 'active'");
 $active_clubs = $active_clubs_res->fetch_assoc()['total'] ?? 0;
 
 // Fetch Total Number of Students Involved in Clubs
@@ -238,12 +238,12 @@ $admin_clubs_cache = [];
                     while ($club = $club_result->fetch_assoc()) {
                         $club_id = $club['club_id'];
                         $admin_clubs_cache[] = $club;
-                        $badge_class = ($club['club_status'] == 'Active') ? 'status-active' : 'status-inactive';
+                        $badge_class = (strtolower((string)$club['club_status']) == 'active') ? 'status-active' : 'status-inactive';
                 ?>
 
                         <div class="native-club-card">
                             <div class="card-inner-content">
-                                <span class="status-badge <?php echo $badge_class; ?>"><?php echo htmlspecialchars($club['club_status']); ?></span>
+                                <span class="status-badge <?php echo $badge_class; ?>"><?php echo htmlspecialchars(ucfirst((string)$club['club_status'])); ?></span>
                                 <h3 style="margin-top: 10px;"><?php echo htmlspecialchars($club['club_name']); ?></h3>
                                 <p class="advisor-tag"><strong>Advisor:</strong> <?php echo htmlspecialchars($club['advisor_name']); ?></p>
                                 <p class="desc-preview-text"><?php echo htmlspecialchars($club['description']); ?></p>
@@ -323,8 +323,8 @@ $admin_clubs_cache = [];
                         <div class="form-group">
                             <label>Club Status</label>
                             <select name="club_status">
-                                <option value="Active" <?php echo ($club['club_status'] == 'Active') ? 'selected' : ''; ?>>Active</option>
-                                <option value="Inactive" <?php echo ($club['club_status'] == 'Inactive') ? 'selected' : ''; ?>>Inactive</option>
+                                <option value="active" <?php echo (strtolower((string)$club['club_status']) == 'active') ? 'selected' : ''; ?>>Active</option>
+                                <option value="inactive" <?php echo (strtolower((string)$club['club_status']) == 'inactive') ? 'selected' : ''; ?>>Inactive</option>
                             </select>
                         </div>
                         <div class="form-group">

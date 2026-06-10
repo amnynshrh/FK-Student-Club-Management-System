@@ -51,6 +51,30 @@ function update_event_status($conn)
 function ensure_event_registration_schema($conn)
 {
     mysqli_query($conn, "ALTER TABLE eventregistration MODIFY registration_status ENUM('registered','cancelled') NOT NULL");
+    mysqli_query($conn, "ALTER TABLE attendance MODIFY point_awarded TINYINT DEFAULT 0");
+}
+function sync_absent_attendance_for_completed_events($conn)
+{
+    mysqli_query($conn, "
+        INSERT INTO attendance (registration_id, attendance_status, check_in_time, point_awarded)
+        SELECT
+            er.registration_id,
+            'absent',
+            NULL,
+            -10
+        FROM eventregistration er
+        INNER JOIN event e ON e.event_id = er.event_id
+        LEFT JOIN attendance a ON a.registration_id = er.registration_id
+        WHERE er.registration_status = 'registered'
+          AND a.attendance_id IS NULL
+          AND NOW() > (
+              CASE
+                  WHEN e.end_time <= e.event_time
+                  THEN DATE_ADD(CONCAT(e.event_date, ' ', e.end_time), INTERVAL 1 DAY)
+                  ELSE CONCAT(e.event_date, ' ', e.end_time)
+              END
+          )
+    ");
 }
 function badge($status)
 {
@@ -97,6 +121,7 @@ setcookie('last_event_page', basename($_SERVER['PHP_SELF']), time() + 86400, '/'
 require_login(['student', 'committee']);
 update_event_status($conn);
 ensure_event_registration_schema($conn);
+sync_absent_attendance_for_completed_events($conn);
 mysqli_query($conn, "
     UPDATE eventwaitinglist ew
     INNER JOIN event e ON e.event_id=ew.event_id
@@ -233,17 +258,18 @@ while ($row = mysqli_fetch_assoc($history)) {
     if ($row['registration_status'] === 'cancelled') {
         $displayStatus = 'Cancelled';
         $displayPoints = 0;
+    } elseif ($attendanceStatus === 'present') {
+        $displayStatus = 'Attend';
+        $attended++;
+    } elseif ($attendanceStatus === 'late') {
+        $displayStatus = 'Late';
+        $attended++;
+    } elseif ($attendanceStatus === 'absent') {
+        $displayStatus = 'Unattend';
+        $displayPoints = 0;
     } elseif ($isCompleted) {
-        if ($attendanceStatus === 'present') {
-            $displayStatus = 'Attend';
-            $attended++;
-        } elseif ($attendanceStatus === 'late') {
-            $displayStatus = 'Late';
-            $attended++;
-        } else {
-            $displayStatus = 'Unattend';
-            $displayPoints = 0;
-        }
+        $displayStatus = 'Unattend';
+        $displayPoints = 0;
     } elseif ($row['registration_status'] === 'registered') {
         $displayStatus = 'Registered';
         $upcoming++;
@@ -455,6 +481,7 @@ krsort($years);
 
                     <thead>
                         <tr>
+                            <th>No.</th>
                             <th>Event Title</th>
                             <th>Date</th>
                             <th>Time</th>
@@ -466,12 +493,14 @@ krsort($years);
                     </thead>
 
                     <tbody id="historyTableBody">
+                        <?php $historyNo = 1; ?>
                         <?php foreach ($historyRows as $row): ?>
                             <tr
                                 data-search="<?php echo e(strtolower($row['event_title'] . ' ' . $row['venue'] . ' ' . $row['display_status'])); ?>"
                                 data-status="<?php echo e($row['display_status']); ?>"
                                 data-year="<?php echo e($row['event_year']); ?>"
                                 data-month="<?php echo e($row['event_month']); ?>">
+                                <td class="history-row-no"><?php echo e($historyNo++); ?></td>
                                 <td><?php echo e($row['event_title']); ?></td>
                                 <td><?php echo e(dmy($row['event_date'])); ?></td>
                                 <td><?php echo e(t($row['event_time'])); ?> - <?php echo e(t($row['end_time'])); ?></td>

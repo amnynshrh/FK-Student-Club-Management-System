@@ -46,7 +46,7 @@ function require_login($roles = [])
 }
 function update_event_status($conn)
 {
-  mysqli_query($conn, "UPDATE event SET event_status=CASE WHEN NOW()>CONCAT(event_date,' ',end_time) THEN 'completed' WHEN NOW() BETWEEN CONCAT(event_date,' ',event_time) AND CONCAT(event_date,' ',end_time) THEN 'ongoing' WHEN (SELECT COUNT(*) FROM eventregistration er WHERE er.event_id=event.event_id AND er.registration_status='registered')>=max_participant THEN 'full' WHEN registration_open=1 THEN 'open' WHEN NOW()<CONCAT(event_date,' ',event_time) THEN 'upcoming' ELSE 'completed' END WHERE event_status!='cancelled'");
+  mysqli_query($conn, "UPDATE event SET event_status=CASE WHEN NOW()>(CASE WHEN end_time<=event_time THEN DATE_ADD(CONCAT(event_date,' ',end_time), INTERVAL 1 DAY) ELSE CONCAT(event_date,' ',end_time) END) THEN 'completed' WHEN NOW() BETWEEN CONCAT(event_date,' ',event_time) AND (CASE WHEN end_time<=event_time THEN DATE_ADD(CONCAT(event_date,' ',end_time), INTERVAL 1 DAY) ELSE CONCAT(event_date,' ',end_time) END) THEN 'ongoing' WHEN (SELECT COUNT(*) FROM eventregistration er WHERE er.event_id=event.event_id AND er.registration_status='registered')>=max_participant THEN 'full' WHEN registration_open=1 THEN 'open' WHEN NOW()<CONCAT(event_date,' ',event_time) THEN 'upcoming' ELSE 'completed' END WHERE event_status!='cancelled'");
 }
 function ensure_registration_open_column($conn)
 {
@@ -59,6 +59,29 @@ function badge($status)
 {
   $s = strtolower((string)$status);
   return '<span class="status-badge ' . e($s) . '">' . e(ucfirst($s)) . '</span>';
+}
+function event_end_datetime($date, $startTime, $endTime)
+{
+  $start = new DateTime($date . ' ' . $startTime);
+  $end = new DateTime($date . ' ' . $endTime);
+  if ($end <= $start) {
+    $end->modify('+1 day');
+  }
+  return $end;
+}
+function determine_event_status($date, $startTime, $endTime, $registrationOpen)
+{
+  $now = new DateTime();
+  $start = new DateTime($date . ' ' . $startTime);
+  $end = event_end_datetime($date, $startTime, $endTime);
+
+  if ($now > $end) {
+    return 'completed';
+  }
+  if ($now >= $start && $now <= $end) {
+    return 'ongoing';
+  }
+  return $registrationOpen === '1' ? 'open' : 'upcoming';
 }
 logout_if_requested();
 $conn = db_connect();
@@ -108,12 +131,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
   if ($event['title'] === '' || $event['description'] === '' || $event['date'] === '' || $event['startTime'] === '' || $event['endTime'] === '' || $event['venue'] === '' || $event['participants'] === '') {
     $message = 'Please fill in all required fields.';
-  } elseif ($event['endTime'] <= $event['startTime']) {
-    $message = 'End time must be after start time.';
+  } elseif ($event['endTime'] === $event['startTime']) {
+    $message = 'End time cannot be the same as start time.';
   } elseif (!$committeeId || !$clubId) {
     $message = 'Committee club information was not found. Please login again.';
   } else {
-    $status = $event['registration_open'] === '1' ? 'open' : (date('Y-m-d H:i:s') < $event['date'] . ' ' . $event['startTime'] ? 'upcoming' : 'ongoing');
+    $status = determine_event_status($event['date'], $event['startTime'], $event['endTime'], $event['registration_open']);
     $stmt = mysqli_prepare($conn, "INSERT INTO event (club_id, committee_id, event_title, event_description, event_date, event_time, end_time, venue, max_participant, event_status, registration_open) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
     mysqli_stmt_bind_param($stmt, 'iissssssisi', $clubId, $committeeId, $event['title'], $event['description'], $event['date'], $event['startTime'], $event['endTime'], $event['venue'], $event['participants'], $status, $event['registration_open']);
 
@@ -374,10 +397,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         return false;
       }
-      if (end <= start) {
+      if (end === start) {
         if (box) {
           box.classList.remove('d-none');
-          box.innerHTML = 'End time must be after start time.';
+          box.innerHTML = 'End time cannot be the same as start time.';
         }
         return false;
       }

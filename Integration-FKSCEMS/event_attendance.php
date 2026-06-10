@@ -15,6 +15,28 @@ $attendees = [];
 $message = "";
 $messageType = "success";
 
+mysqli_query($conn, "ALTER TABLE attendance MODIFY point_awarded TINYINT DEFAULT 0");
+mysqli_query($conn, "
+    INSERT INTO attendance (registration_id, attendance_status, check_in_time, point_awarded)
+    SELECT
+        er.registration_id,
+        'absent',
+        NULL,
+        -10
+    FROM eventregistration er
+    INNER JOIN event e ON e.event_id = er.event_id
+    LEFT JOIN attendance a ON a.registration_id = er.registration_id
+    WHERE er.registration_status = 'registered'
+      AND a.attendance_id IS NULL
+      AND NOW() > (
+          CASE
+              WHEN e.end_time <= e.event_time
+              THEN DATE_ADD(CONCAT(e.event_date, ' ', e.end_time), INTERVAL 1 DAY)
+              ELSE CONCAT(e.event_date, ' ', e.end_time)
+          END
+      )
+");
+
 if ($eventId > 0) {
     $eventSql = "
         SELECT
@@ -460,27 +482,27 @@ if ($event) {
                                                             ?>
                                                             <label class="status-choice">
                                                                 <input
-                                                                    type="checkbox"
+                                                                    type="radio"
                                                                     class="status-checkbox"
                                                                     data-group="attendance-<?php echo $regId; ?>"
                                                                     name="attendance[<?php echo $regId; ?>]"
                                                                     value="present"
                                                                     <?php echo $current === "present" ? "checked" : ""; ?>
-                                                                >Present
+                                                                >Attend
                                                             </label>
                                                             <label class="status-choice">
                                                                 <input
-                                                                    type="checkbox"
+                                                                    type="radio"
                                                                     class="status-checkbox"
                                                                     data-group="attendance-<?php echo $regId; ?>"
                                                                     name="attendance[<?php echo $regId; ?>]"
                                                                     value="absent"
                                                                     <?php echo $current === "absent" ? "checked" : ""; ?>
-                                                                >Absent
+                                                                >Unattend
                                                             </label>
                                                             <label class="status-choice">
                                                                 <input
-                                                                    type="checkbox"
+                                                                    type="radio"
                                                                     class="status-checkbox"
                                                                     data-group="attendance-<?php echo $regId; ?>"
                                                                     name="attendance[<?php echo $regId; ?>]"
@@ -570,19 +592,6 @@ if ($event) {
             }
         })();
 
-        document.querySelectorAll(".status-checkbox").forEach(function (checkbox) {
-            checkbox.addEventListener("change", function () {
-                if (!this.checked) {
-                    return;
-                }
-                var group = this.getAttribute("data-group");
-                document.querySelectorAll('.status-checkbox[data-group="' + group + '"]').forEach(function (other) {
-                    if (other !== checkbox) {
-                        other.checked = false;
-                    }
-                });
-            });
-        });
     </script>
 </body>
 

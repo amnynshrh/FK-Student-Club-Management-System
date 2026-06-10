@@ -151,7 +151,7 @@ CREATE TABLE `attendance` (
   `registration_id` INT UNSIGNED NOT NULL,
   `attendance_status` ENUM('present','absent','late') NOT NULL,
   `check_in_time` DATETIME DEFAULT NULL,
-  `point_awarded` TINYINT UNSIGNED DEFAULT 0,
+  `point_awarded` TINYINT DEFAULT 0,
   PRIMARY KEY (`attendance_id`),
   CONSTRAINT `fk_attendance_registration` FOREIGN KEY (`registration_id`) REFERENCES `eventregistration` (`registration_id`)
     ON UPDATE CASCADE ON DELETE CASCADE

@@ -46,7 +46,7 @@ function require_login($roles = [])
 }
 function update_event_status($conn)
 {
-  mysqli_query($conn, "UPDATE event SET event_status=CASE WHEN NOW()>CONCAT(event_date,' ',end_time) THEN 'completed' WHEN NOW() BETWEEN CONCAT(event_date,' ',event_time) AND CONCAT(event_date,' ',end_time) THEN 'ongoing' WHEN (SELECT COUNT(*) FROM eventregistration er WHERE er.event_id=event.event_id AND er.registration_status='registered')>=max_participant THEN 'full' WHEN registration_open=1 THEN 'open' WHEN NOW()<CONCAT(event_date,' ',event_time) THEN 'upcoming' ELSE 'completed' END WHERE event_status!='cancelled'");
+  mysqli_query($conn, "UPDATE event SET event_status=CASE WHEN NOW()>(CASE WHEN end_time<=event_time THEN DATE_ADD(CONCAT(event_date,' ',end_time), INTERVAL 1 DAY) ELSE CONCAT(event_date,' ',end_time) END) THEN 'completed' WHEN NOW() BETWEEN CONCAT(event_date,' ',event_time) AND (CASE WHEN end_time<=event_time THEN DATE_ADD(CONCAT(event_date,' ',end_time), INTERVAL 1 DAY) ELSE CONCAT(event_date,' ',end_time) END) THEN 'ongoing' WHEN (SELECT COUNT(*) FROM eventregistration er WHERE er.event_id=event.event_id AND er.registration_status='registered')>=max_participant THEN 'full' WHEN registration_open=1 THEN 'open' WHEN NOW()<CONCAT(event_date,' ',event_time) THEN 'upcoming' ELSE 'completed' END WHERE event_status!='cancelled'");
 }
 function ensure_registration_open_column($conn)
 {
@@ -74,14 +74,44 @@ if (isset($_GET['success']) && $_GET['success'] === 'event_added') {
   $message = 'Event updated successfully.';
 } elseif (isset($_GET['success']) && $_GET['success'] === 'event_cancelled') {
   $message = 'Event cancelled successfully.';
+} elseif (isset($_GET['error']) && $_GET['error'] === 'completed_event') {
+  $message = 'Completed events cannot be edited.';
 }
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delete') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+  $action = $_POST['action'] ?? '';
   $id = $_POST['event_id'] ?? '';
-  if ($id !== '') {
+  if ($id !== '' && $action === 'cancel') {
     $st = mysqli_prepare($conn, "UPDATE event SET event_status='cancelled', registration_open=0 WHERE event_id=?");
     mysqli_stmt_bind_param($st, 'i', $id);
     mysqli_stmt_execute($st);
-    $message = 'Event deleted successfully.';
+    $message = 'Event cancelled successfully.';
+  } elseif ($id !== '' && $action === 'delete') {
+    mysqli_begin_transaction($conn);
+    $ok = true;
+
+    $st = mysqli_prepare($conn, "DELETE a FROM attendance a INNER JOIN eventregistration er ON er.registration_id=a.registration_id WHERE er.event_id=?");
+    mysqli_stmt_bind_param($st, 'i', $id);
+    $ok = $ok && mysqli_stmt_execute($st);
+
+    $st = mysqli_prepare($conn, "DELETE FROM eventwaitinglist WHERE event_id=?");
+    mysqli_stmt_bind_param($st, 'i', $id);
+    $ok = $ok && mysqli_stmt_execute($st);
+
+    $st = mysqli_prepare($conn, "DELETE FROM eventregistration WHERE event_id=?");
+    mysqli_stmt_bind_param($st, 'i', $id);
+    $ok = $ok && mysqli_stmt_execute($st);
+
+    $st = mysqli_prepare($conn, "DELETE FROM event WHERE event_id=?");
+    mysqli_stmt_bind_param($st, 'i', $id);
+    $ok = $ok && mysqli_stmt_execute($st);
+
+    if ($ok) {
+      mysqli_commit($conn);
+      $message = 'Event deleted from database successfully.';
+    } else {
+      mysqli_rollback($conn);
+      $message = 'Event delete failed: ' . mysqli_error($conn);
+    }
   }
 }
 $events = mysqli_query($conn, "SELECT e.*, c.club_name, COUNT(er.registration_id) registered_count FROM event e INNER JOIN club c ON c.club_id=e.club_id LEFT JOIN eventregistration er ON er.event_id=e.event_id AND er.registration_status='registered' GROUP BY e.event_id ORDER BY e.event_date DESC");
@@ -296,6 +326,7 @@ $completed = mysqli_fetch_row(mysqli_query($conn, "SELECT COUNT(*) FROM event WH
         <table class="event-table-custom">
           <thead>
             <tr>
+              <th>No.</th>
               <th>Event Title</th>
               <th>Date</th>
               <th>Time</th>
@@ -307,6 +338,7 @@ $completed = mysqli_fetch_row(mysqli_query($conn, "SELECT COUNT(*) FROM event WH
           </thead>
 
           <tbody id="eventTableBody">
+            <?php $eventNo = 1; ?>
             <?php while ($row = mysqli_fetch_assoc($events)): ?>
               <?php
               $displayStatus = ((int) ($row['registration_open'] ?? 1) === 1 && in_array($row['event_status'], ['open', 'upcoming'], true))
@@ -314,6 +346,7 @@ $completed = mysqli_fetch_row(mysqli_query($conn, "SELECT COUNT(*) FROM event WH
                 : ucfirst($row['event_status']);
               ?>
               <tr data-search="<?php echo e(strtolower($row['event_title'] . ' ' . $row['venue'] . ' ' . $displayStatus)); ?>" data-status="<?php echo e(strtolower($displayStatus)); ?>" data-month="<?php echo e(date('F', strtotime($row['event_date']))); ?>">
+                <td class="event-row-no"><?php echo e($eventNo++); ?></td>
                 <td><?php echo e($row['event_title']); ?></td>
                 <td><?php echo e(dmy($row['event_date'])); ?></td>
                 <td><?php echo e(t($row['event_time'])); ?> - <?php echo e(t($row['end_time'])); ?></td>
@@ -323,8 +356,17 @@ $completed = mysqli_fetch_row(mysqli_query($conn, "SELECT COUNT(*) FROM event WH
                 <td>
                   <div class="action-buttons">
                     <a href="view_event.php?mode=committee&id=<?php echo e($row['event_id']); ?>" class="action-btn view-btn" title="View Event"><i class="bi bi-eye"></i></a>
-                    <a href="edit_event.php?id=<?php echo e($row['event_id']); ?>" class="action-btn edit-btn" title="Edit Event"><i class="bi bi-pencil"></i></a>
-                    <form method="POST" class="action-form" onsubmit="return confirm('Delete this event?');">
+                    <?php if (strtolower((string)$row['event_status']) !== 'completed'): ?>
+                      <a href="edit_event.php?id=<?php echo e($row['event_id']); ?>" class="action-btn edit-btn" title="Edit Event"><i class="bi bi-pencil"></i></a>
+                    <?php endif; ?>
+                    <?php if (!in_array(strtolower((string)$row['event_status']), ['cancelled', 'completed'], true)): ?>
+                      <form method="POST" class="action-form" onsubmit="return confirm('Cancel this event? Students will see it as cancelled.');">
+                        <input type="hidden" name="action" value="cancel">
+                        <input type="hidden" name="event_id" value="<?php echo e($row['event_id']); ?>">
+                        <button class="action-btn cancel-btn" type="submit" title="Cancel Event"><i class="bi bi-slash-circle"></i></button>
+                      </form>
+                    <?php endif; ?>
+                    <form method="POST" class="action-form" onsubmit="return confirm('Delete this event permanently from database?');">
                       <input type="hidden" name="action" value="delete">
                       <input type="hidden" name="event_id" value="<?php echo e($row['event_id']); ?>">
                       <button class="action-btn delete-btn" type="submit" title="Delete Event"><i class="bi bi-trash"></i></button>

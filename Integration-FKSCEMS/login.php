@@ -22,8 +22,24 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $input_pass = $_POST['password']; 
     $input_role = $_POST['role']; 
 
-    // Search by username AND the selected role for strict access control
-    $sql = "SELECT user_id, username, password, role FROM user WHERE username = ? AND LOWER(role) = LOWER(?)";
+    // Search by username AND the selected role for strict access control.
+    $sql = "
+        SELECT
+            u.user_id,
+            u.username,
+            u.email,
+            u.password,
+            u.role,
+            s.name AS student_name,
+            s.matric_number,
+            s.profile_photo,
+            a.name AS admin_name
+        FROM user u
+        LEFT JOIN student s ON s.user_id = u.user_id
+        LEFT JOIN admin a ON a.user_id = u.user_id
+        WHERE u.username = ? AND LOWER(u.role) = LOWER(?)
+        LIMIT 1
+    ";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("ss", $input_user, $input_role);
     $stmt->execute();
@@ -35,17 +51,49 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         // Accept hashed passwords and existing plain seed passwords used in the local DB.
         if (password_verify($input_pass, $user['password']) || hash_equals((string)$user['password'], $input_pass)) {
             
+            $role = strtolower((string)$user['role']);
+            $display_name = $user['student_name'] ?: ($user['admin_name'] ?: $user['username']);
+
             // Credentials match! Save critical tracking keys to the active Session state
             $_SESSION['user_id']  = $user['user_id'];
             $_SESSION['username'] = $user['username'];
-            $_SESSION['role']     = $user['role'];
+            $_SESSION['name'] = $display_name;
+            $_SESSION['user_name'] = $display_name;
+            $_SESSION['email'] = $user['email'] ?? '';
+            $_SESSION['role']     = $role;
+            $_SESSION['matric'] = $user['matric_number'] ?? '';
+            $_SESSION['photo'] = $user['profile_photo'] ?? '';
             $_SESSION['Login'] = 'YES';
             $_SESSION['SESS_USER_ID'] = $user['user_id'];
             $_SESSION['SESS_USERNAME'] = $user['username'];
-            $_SESSION['SESS_ROLE'] = $user['role'];
+            $_SESSION['SESS_ROLE'] = $role;
+
+            if ($role === 'committee') {
+                $committee_query = "
+                    SELECT c.committee_id
+                    FROM student s
+                    INNER JOIN membership m ON s.matric_number = m.matric_number
+                    INNER JOIN committee c ON m.membership_id = c.membership_id
+                    WHERE s.user_id = ?
+                    LIMIT 1
+                ";
+
+                $stmt_committee = $conn->prepare($committee_query);
+                if ($stmt_committee) {
+                    $stmt_committee->bind_param("i", $user['user_id']);
+                    $stmt_committee->execute();
+                    $committee_result = $stmt_committee->get_result();
+                    $committee_data = $committee_result->fetch_assoc();
+                    if (!empty($committee_data['committee_id'])) {
+                        $_SESSION['SESS_COMMITTEE_ID'] = $committee_data['committee_id'];
+                    }
+                    $stmt_committee->close();
+                }
+            }
+
+            setcookie("session_timeout", "active", time() + 300, "/");
 
             // INSTANT SERVER-SIDE REDIRECTION (No Popups)
-            $role = strtolower((string)$user['role']);
             if ($role === 'admin') {
                 header("Location: admin.php");
             } elseif ($role === 'committee') {

@@ -211,6 +211,14 @@ while ($row = mysqli_fetch_assoc($eventsResult)) {
         $row['display_status'] = 'Open';
     }
 
+    $hasStudentRecord = (int) $row['already_registered'] === 1
+        || $row['my_registration_status'] !== ''
+        || $row['my_waiting_status'] !== '';
+
+    if (in_array($row['event_status'], ['completed', 'cancelled'], true) && !$hasStudentRecord) {
+        continue;
+    }
+
     $clubs[$row['club_name']] = true;
     $events[] = $row;
 }
@@ -419,6 +427,7 @@ ksort($clubs);
 
                     <thead>
                         <tr>
+                            <th>No.</th>
                             <th>Event Title</th>
                             <th>Date</th>
                             <th>Time</th>
@@ -432,16 +441,18 @@ ksort($clubs);
                     <tbody id="eventTableBody">
                         <?php if (!$events): ?>
                             <tr>
-                                <td colspan="7" class="text-center py-4 text-muted">No events found.</td>
+                                <td colspan="8" class="text-center py-4 text-muted">No events found.</td>
                             </tr>
                         <?php endif; ?>
 
+                        <?php $eventNo = 1; ?>
                         <?php foreach ($events as $event): ?>
                             <tr
                                 data-title="<?php echo e(strtolower($event['event_title'])); ?>"
                                 data-club="<?php echo e($event['club_name']); ?>"
                                 data-status="<?php echo e($event['display_status']); ?>"
                                 data-month="<?php echo e(month_name($event['event_date'])); ?>">
+                                <td class="event-row-no"><?php echo e($eventNo++); ?></td>
                                 <td><?php echo e($event['event_title']); ?></td>
                                 <td><?php echo e(date('d M Y', strtotime($event['event_date']))); ?></td>
                                 <td><?php echo e(display_time($event['event_time'])); ?> - <?php echo e(display_time($event['end_time'])); ?></td>

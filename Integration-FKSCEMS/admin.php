@@ -30,10 +30,12 @@ $sql_students = "SELECT COUNT(*) as total FROM user WHERE LOWER(role) = 'student
 $result_students = $conn->query($sql_students);
 $total_students = ($result_students) ? $result_students->fetch_assoc()['total'] : 0;
 
-$total_clubs = 309; // Hardcoded for now
+$sql_clubs = "SELECT COUNT(*) as total FROM club WHERE LOWER(club_status) = 'active'";
+$result_clubs = $conn->query($sql_clubs);
+$total_clubs = ($result_clubs) ? $result_clubs->fetch_assoc()['total'] : 0;
 
-// Pending Registrations (logic based on user table status)
-$sql_pending = "SELECT COUNT(*) as total FROM student WHERE status = 'Pending'";
+// Inactive student accounts that still need admin attention.
+$sql_pending = "SELECT COUNT(*) as total FROM student WHERE LOWER(status) = 'inactive'";
 $result_pending = $conn->query($sql_pending);
 $total_pending = ($result_pending) ? $result_pending->fetch_assoc()['total'] : 0;
 
@@ -132,7 +134,7 @@ $recent_result = $conn->query($sql_recent);
                             echo "<td><strong>" . htmlspecialchars($row['username']) . "</strong></td>";
                             echo "<td>" . htmlspecialchars($row['name'] ?? 'N/A') . "</td>";
                             echo "<td>" . htmlspecialchars($row['email']) . "</td>";
-                            echo "<td><span class='badge $badge'>" . htmlspecialchars($row['role']) . "</span></td>";
+                            echo "<td><span class='badge $badge'>" . htmlspecialchars(ucfirst((string)$row['role'])) . "</span></td>";
                             echo "</tr>";
                         }
                     } else {
