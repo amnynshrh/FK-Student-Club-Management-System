@@ -35,9 +35,7 @@ if ($student_name === '') {
     <div class="nav-wrapper">
         <div class="nav-left">
             <img src="fk.png" width="200" alt="FK Logo" class="nav-logo">
-            <div class="nav-brand">
-                FK Student Club &<br>Event Management System
-            </div>
+        
         </div>
         <ul class="menu-links">
             <li>
