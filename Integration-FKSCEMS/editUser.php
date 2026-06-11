@@ -15,6 +15,8 @@ $dbname = "fk_scems_db";
 $conn = new mysqli($servername, $username, $password, $dbname);
 if ($conn->connect_error) { die("Connection failed: " . $conn->connect_error); }
 
+$club_memberships = [];
+
 // 2. FETCH USER DATA (JOINED)
 if (isset($_GET['id'])) {
     $user_id = $conn->real_escape_string($_GET['id']);
@@ -32,6 +34,20 @@ if (isset($_GET['id'])) {
     } else {
         die("User not found.");
     }
+
+    // NEW: Fetch club membership and committee positions if user is a student
+    if (!empty($user['matric_number'])) {
+        $matric_number = $conn->real_escape_string($user['matric_number']);
+        $sql_clubs = "SELECT c.club_name, m.membership_status, COALESCE(com.position, 'Member') as club_position
+                      FROM membership m
+                      JOIN club c ON m.club_id = c.club_id
+                      LEFT JOIN committee com ON m.membership_id = com.membership_id
+                      WHERE m.matric_number = '$matric_number'";
+        $result_clubs = $conn->query($sql_clubs);
+        while ($row = $result_clubs->fetch_assoc()) {
+            $club_memberships[] = $row;
+        }
+    }
 } else {
     header("Location: membership.php");
     exit();
@@ -42,7 +58,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $name = $conn->real_escape_string($_POST['name']);
     $email = $conn->real_escape_string($_POST['email']);
     $role = $conn->real_escape_string($_POST['role']);
-    $status = $conn->real_escape_string($_POST['status']);
+    // CRITICAL ENUM FIX: Convert status value to lowercase to match ('active', 'inactive') in DB
+    $status = strtolower($conn->real_escape_string($_POST['status'])); 
 
     // Start Transaction to update two tables safely
     $conn->begin_transaction();
@@ -52,7 +69,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $update_user = "UPDATE user SET email='$email', role='$role' WHERE user_id='$user_id'";
         $conn->query($update_user);
 
-        // B. Update the 'student' table
+        // B. Update the 'student' table with lowercase status
         $update_student = "UPDATE student SET name='$name', status='$status' WHERE user_id='$user_id'";
         $conn->query($update_student);
 
@@ -92,6 +109,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         .btn-save:hover { background: #003366; }
         .btn-cancel:hover { background: #5a6268; }
         .info-tag { background: #e9ecef; padding: 5px 10px; border-radius: 4px; font-size: 0.9em; color: #333; }
+        
+        /* New styling for the added club section */
+        .membership-panel { margin-top: 20px; padding: 15px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; }
+        .membership-panel-title { font-size: 14px; font-weight: bold; color: #004a99; margin-bottom: 10px; border-bottom: 1px solid #cbd5e1; padding-bottom: 4px; }
+        .club-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; font-size: 13px; border-bottom: 1px dashed #e2e8f0; }
+        .club-row:last-child { border-bottom: none; }
+        .badge-status { font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: 600; text-transform: capitalize; }
+        .badge-approved { background-color: #dcfce7; color: #15803d; }
+        .badge-pending { background-color: #fef9c3; color: #a16207; }
+        .badge-rejected { background-color: #fee2e2; color: #b91c1c; }
+        .position-label { color: #64748b; font-style: italic; }
     </style>
 </head>
 <body>
@@ -119,18 +147,44 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <div class="form-group">
             <label>Role</label>
             <select name="role">
-                <option value="Student" <?php if($user['role'] == 'Student') echo 'selected'; ?>>Student</option>
-                <option value="Committee" <?php if($user['role'] == 'Committee') echo 'selected'; ?>>Committee Member</option>
-                <option value="Admin" <?php if($user['role'] == 'Admin') echo 'selected'; ?>>Administrator</option>
+                <option value="student" <?php if(strtolower($user['role']) == 'student') echo 'selected'; ?>>Student</option>
+                <option value="committee" <?php if(strtolower($user['role']) == 'committee') echo 'selected'; ?>>Committee Member</option>
+                <option value="admin" <?php if(strtolower($user['role']) == 'admin') echo 'selected'; ?>>Administrator</option>
             </select>
         </div>
 
         <div class="form-group">
             <label>Status</label>
             <select name="status">
-                <option value="Active" <?php if($user['status'] == 'Active') echo 'selected'; ?>>Active</option>
-                <option value="Inactive" <?php if($user['status'] == 'Inactive') echo 'selected'; ?>>Inactive</option>
+                <option value="active" <?php if(strtolower($user['status'] ?? '') == 'active') echo 'selected'; ?>>Active</option>
+                <option value="inactive" <?php if(strtolower($user['status'] ?? '') == 'inactive') echo 'selected'; ?>>Inactive</option>
             </select>
+        </div>
+
+        <div class="membership-panel">
+            <div class="membership-panel-title">Club Membership Information</div>
+            <?php if (!empty($club_memberships)): ?>
+                <?php foreach ($club_memberships as $club): 
+                    $current_status = strtolower($club['membership_status']); // Matches pending/approved/rejected
+                    $badge_style = 'badge-pending';
+                    if ($current_status === 'approved') $badge_style = 'badge-approved';
+                    if ($current_status === 'rejected') $badge_style = 'badge-rejected';
+                ?>
+                    <div class="club-row">
+                        <div>
+                            <strong><?php echo htmlspecialchars($club['club_name']); ?></strong> 
+                            <span class="position-label"> - <?php echo htmlspecialchars($club['club_position']); ?></span>
+                        </div>
+                        <span class="badge-status <?php echo $badge_style; ?>">
+                            <?php echo htmlspecialchars($current_status); ?>
+                        </span>
+                    </div>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <div style="font-size: 12px; color: #94a3b8; text-align: center; padding: 5px 0;">
+                    Not registered in any club memberships currently.
+                </div>
+            <?php endif; ?>
         </div>
 
         <div class="btn-group">
