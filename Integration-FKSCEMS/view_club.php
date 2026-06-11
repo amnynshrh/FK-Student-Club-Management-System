@@ -99,13 +99,24 @@ $clubs_for_modals = [];
     <?php echo $message; ?>
 
     <div class="view-wrapper container py-5">
-        <div class="view-header text-center mb-5">
+        <div class="view-header text-center mb-4">
             <h2>Faculty of Computing Clubs</h2>
             <br>
             <hr>
         </div>
 
-        <div class="clubs-native-grid row g-4">
+        <div class="row justify-content-center mb-5">
+            <div class="col-12 col-md-6 col-lg-5">
+                <div class="input-group shadow-sm">
+                    <span class="input-group-text bg-white border-end-0">
+                        🔍
+                    </span>
+                    <input type="text" id="clubSearchInput" class="form-control border-start-0 ps-1" placeholder="Search clubs by name or advisor..." onkeyup="filterClubs()">
+                </div>
+            </div>
+        </div>
+
+        <div class="clubs-native-grid row g-4" id="clubsGrid">
             <?php
             if ($club_result && $club_result->num_rows > 0) {
                 while ($club = $club_result->fetch_assoc()) {
@@ -113,7 +124,9 @@ $clubs_for_modals = [];
                     $clubs_for_modals[] = $club;
                     $already_joined = !empty($club['membership_status']);
             ?>
-                    <div class="col-12 col-md-6 col-lg-4">
+                    <div class="col-12 col-md-6 col-lg-4 club-card-wrapper" 
+                         data-club-name="<?php echo htmlspecialchars(strtolower($club['club_name'])); ?>"
+                         data-advisor-name="<?php echo htmlspecialchars(strtolower($club['advisor_name'])); ?>">
                         <div class="native-club-card h-100 d-flex flex-column position-relative">
                             <div class="card-inner-content d-flex flex-column h-100 p-3">
                                 <div class="d-flex justify-content-between align-items-start mb-2">
@@ -142,6 +155,9 @@ $clubs_for_modals = [];
                 echo '<div class="col-12"><div class="no-clubs-alert text-center w-100">No active clubs registered within the faculty at this moment.</div></div>';
             }
             ?>
+            <div class="col-12 d-none" id="noMatchAlert">
+                <div class="no-clubs-alert text-center w-100">No clubs match your search criteria.</div>
+            </div>
         </div>
     </div>
 
@@ -312,6 +328,34 @@ $clubs_for_modals = [];
     ?>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+    function filterClubs() {
+        let input = document.getElementById('clubSearchInput').value.toLowerCase();
+        let cards = document.getElementsByClassName('club-card-wrapper');
+        let noMatchAlert = document.getElementById('noMatchAlert');
+        let visibleCount = 0;
+
+        for (let i = 0; i < cards.length; i++) {
+            let clubName = cards[i].getAttribute('data-club-name');
+            let advisorName = cards[i].getAttribute('data-advisor-name');
+
+            if (clubName.includes(input) || advisorName.includes(input)) {
+                cards[i].classList.remove('d-none');
+                visibleCount++;
+            } else {
+                cards[i].classList.add('d-none');
+            }
+        }
+
+        // Show a custom notification message if no matching layout elements remain visible
+        if (visibleCount === 0 && input.trim() !== "") {
+            noMatchAlert.classList.remove('d-none');
+        } else {
+            noMatchAlert.classList.add('d-none');
+        }
+    }
+    </script>
 </body>
 
 </html>
