@@ -29,17 +29,19 @@ function logout_if_requested()
 {
     if (($_GET['action'] ?? '') === 'logout') {
         session_destroy();
-        header('Location: ../index.html');
+        header('Location: login.php');
         exit;
     }
 }
 function require_login($roles = [])
 {
-    if (empty($_SESSION['Login']) || $_SESSION['Login'] !== 'YES') {
-        header('Location: ../index.html');
+    if ((empty($_SESSION['Login']) || $_SESSION['Login'] !== 'YES') && empty($_SESSION['user_id'])) {
+        header('Location: login.php');
         exit;
     }
-    if ($roles && !in_array($_SESSION['role'] ?? '', $roles, true)) {
+    $sessionRole = strtolower((string) ($_SESSION['role'] ?? ''));
+    $allowedRoles = array_map('strtolower', $roles);
+    if ($roles && !in_array($sessionRole, $allowedRoles, true)) {
         echo '<p style="padding:20px;color:#b00020;">Access denied.</p>';
         exit;
     }

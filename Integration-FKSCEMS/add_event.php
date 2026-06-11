@@ -29,17 +29,19 @@ function logout_if_requested()
 {
   if (($_GET['action'] ?? '') === 'logout') {
     session_destroy();
-    header('Location: ../index.html');
+    header('Location: login.php');
     exit;
   }
 }
 function require_login($roles = [])
 {
-  if (empty($_SESSION['Login']) || $_SESSION['Login'] !== 'YES') {
-    header('Location: ../index.html');
+  if ((empty($_SESSION['Login']) || $_SESSION['Login'] !== 'YES') && empty($_SESSION['user_id'])) {
+    header('Location: login.php');
     exit;
   }
-  if ($roles && !in_array($_SESSION['role'] ?? '', $roles, true)) {
+  $sessionRole = strtolower((string) ($_SESSION['role'] ?? ''));
+  $allowedRoles = array_map('strtolower', $roles);
+  if ($roles && !in_array($sessionRole, $allowedRoles, true)) {
     echo '<p style="padding:20px;color:#b00020;">Access denied.</p>';
     exit;
   }
@@ -82,6 +84,32 @@ function determine_event_status($date, $startTime, $endTime, $registrationOpen)
     return 'ongoing';
   }
   return $registrationOpen === '1' ? 'open' : 'upcoming';
+}
+function has_booking_clash($conn, $date, $startTime, $endTime, $venue, $excludeEventId = 0)
+{
+  $newStart = $date . ' ' . $startTime;
+  $newEnd = event_end_datetime($date, $startTime, $endTime)->format('Y-m-d H:i:s');
+
+  $sql = "
+    SELECT event_id
+    FROM event
+    WHERE LOWER(TRIM(venue)) = LOWER(TRIM(?))
+      AND event_status != 'cancelled'
+      AND ? < (
+        CASE
+          WHEN end_time <= event_time
+          THEN DATE_ADD(CONCAT(event_date, ' ', end_time), INTERVAL 1 DAY)
+          ELSE CONCAT(event_date, ' ', end_time)
+        END
+      )
+      AND ? > CONCAT(event_date, ' ', event_time)
+      AND event_id <> ?
+    LIMIT 1
+  ";
+  $stmt = mysqli_prepare($conn, $sql);
+  mysqli_stmt_bind_param($stmt, 'sssi', $venue, $newStart, $newEnd, $excludeEventId);
+  mysqli_stmt_execute($stmt);
+  return mysqli_num_rows(mysqli_stmt_get_result($stmt)) > 0;
 }
 logout_if_requested();
 $conn = db_connect();
@@ -133,6 +161,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $message = 'Please fill in all required fields.';
   } elseif ($event['endTime'] === $event['startTime']) {
     $message = 'End time cannot be the same as start time.';
+  } elseif (has_booking_clash($conn, $event['date'], $event['startTime'], $event['endTime'], $event['venue'])) {
+    $message = 'Booking clash detected. This venue is already booked during the selected time.';
   } elseif (!$committeeId || !$clubId) {
     $message = 'Committee club information was not found. Please login again.';
   } else {
@@ -171,7 +201,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <script src="https://cdn.tailwindcss.com"></script>
 
   <!-- Custom Theme UMPSA -->
-  <link rel="stylesheet" href="assets/css/committee.css" />
+  <link rel="stylesheet" href="committee.css" />
 
   <style>
     body {

@@ -291,7 +291,7 @@ if ($event) {
     <script src="https://cdn.tailwindcss.com"></script>
 
     <!-- Custom Theme UMPSA -->
-    <link rel="stylesheet" href="assets/css/committee.css">
+    <link rel="stylesheet" href="committee.css">
 
     <style>
         body {
