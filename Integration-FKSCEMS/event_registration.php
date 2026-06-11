@@ -45,12 +45,12 @@ function ensure_registration_open_column($conn)
 
 if (($_GET['action'] ?? '') === 'logout') {
     session_destroy();
-    header('Location: login.php');
+    header('Location: ../index.html');
     exit;
 }
 
-if ((empty($_SESSION['Login']) || $_SESSION['Login'] !== 'YES') && empty($_SESSION['user_id'])) {
-    header('Location: login.php');
+if (empty($_SESSION['Login']) || $_SESSION['Login'] !== 'YES') {
+    header('Location: ../index.html');
     exit;
 }
 
@@ -215,7 +215,7 @@ while ($row = mysqli_fetch_assoc($eventsResult)) {
         || $row['my_registration_status'] !== ''
         || $row['my_waiting_status'] !== '';
 
-    if ($row['event_status'] === 'completed' && !$hasStudentRecord) {
+    if (in_array($row['event_status'], ['completed', 'cancelled'], true) && !$hasStudentRecord) {
         continue;
     }
 
@@ -398,6 +398,8 @@ ksort($clubs);
                     <option value="Registered">Registered</option>
                     <option value="Waiting">Waiting</option>
                     <option value="Notified">Notified</option>
+                    <option value="Completed">Completed</option>
+                    <option value="Cancelled">Cancelled</option>
                 </select>
 
                 <select class="filter-select-custom" id="monthFilter">

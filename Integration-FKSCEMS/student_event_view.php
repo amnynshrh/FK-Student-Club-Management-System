@@ -38,15 +38,15 @@ function logout_if_requested()
 {
     if (($_GET['action'] ?? '') === 'logout') {
         session_destroy();
-        header('Location: login.php');
+        header('Location: ../index.html');
         exit;
     }
 }
 
 function require_student_login()
 {
-    if ((empty($_SESSION['Login']) || $_SESSION['Login'] !== 'YES') && empty($_SESSION['user_id'])) {
-        header('Location: login.php');
+    if (empty($_SESSION['Login']) || $_SESSION['Login'] !== 'YES') {
+        header('Location: ../index.html');
         exit;
     }
 }

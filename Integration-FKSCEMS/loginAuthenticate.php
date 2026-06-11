@@ -34,10 +34,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         // Convert the database value to lowercase to protect against casing conflicts
         $db_role = strtolower($user['role']); 
 
-        // Support both seeded plain-text passwords and newly registered hashed passwords.
-        $password_matches = password_verify($input_pass, $user['password']) || hash_equals($user['password'], $input_pass);
-
-        if ($password_matches) {
+        // Verify the plain text password against the securely encrypted database hash
+        if (password_verify($input_pass, $user['password'])) {
             
             // 3. ROLE VALIDATION LOGIC (FIXED CASE MATCHING)
             $access_granted = false;
@@ -61,32 +59,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 
                 // Capitalize the first letter (e.g. 'Student', 'Committee') so it satisfies your Dashboard check expectations
                 $_SESSION['role']     = ucfirst($db_role); 
-                $_SESSION['Login'] = 'YES';
-                $_SESSION['SESS_USER_ID'] = $user['user_id'];
-                $_SESSION['SESS_USERNAME'] = $user['username'];
-                setcookie("session_timeout", "active", time() + 300, "/");
-
-                $profile_stmt = $conn->prepare("
-                    SELECT s.matric_number, c.committee_id
-                    FROM user u
-                    LEFT JOIN student s ON s.user_id = u.user_id
-                    LEFT JOIN membership m ON m.matric_number = s.matric_number
-                    LEFT JOIN committee c ON c.membership_id = m.membership_id
-                    WHERE u.user_id = ?
-                    LIMIT 1
-                ");
-                $profile_stmt->bind_param("i", $user['user_id']);
-                $profile_stmt->execute();
-                $profile_result = $profile_stmt->get_result();
-                if ($profile = $profile_result->fetch_assoc()) {
-                    if (!empty($profile['matric_number'])) {
-                        $_SESSION['matric'] = $profile['matric_number'];
-                        $_SESSION['SESS_MATRIC_NUMBER'] = $profile['matric_number'];
-                    }
-                    if (!empty($profile['committee_id'])) {
-                        $_SESSION['SESS_COMMITTEE_ID'] = $profile['committee_id'];
-                    }
-                }
 
                 // Role-based redirection based on the authorized lowercase context
                 if ($db_role === 'admin') {
