@@ -5,6 +5,10 @@ session_start();
 // Connect to your existing database
 require_once 'config/db.php';
 
+// Set timezone to ensure accurate date comparisons
+date_default_timezone_set('Asia/Kuala_Lumpur');
+$current_date = date('Y-m-d');
+
 $user_id = $_SESSION['user_id'];
 $sql_student = "
 SELECT matric_number
@@ -20,9 +24,9 @@ $row_student = $result_student->fetch_assoc();
 $logged_in_matric = $row_student['matric_number'];
 $message = "";
 
-// ==========================================================================
+
 // ACTION HANDLER: INSERT INTO MEMBERSHIP TABLE WHEN STUDENT REGISTERS
-// ==========================================================================
+
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['join_club'])) {
     $club_id = intval($_POST['club_id']);
 
@@ -40,7 +44,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['join_club'])) {
         </div>";
     } else {
         // INSERT Query: Places student registration parameter blocks into membership mapping
-        $join_stmt = $conn->prepare("INSERT INTO membership (matric_number, club_id, membership_status, join_date) VALUES (?, ?, 'Active', NOW())");
+        $join_stmt = $conn->prepare("INSERT INTO membership (matric_number, club_id, membership_status, join_date) VALUES (?, ?, 'approved', NOW())");
         $join_stmt->bind_param("si", $logged_in_matric, $club_id);
 
         if ($join_stmt->execute()) {
@@ -61,22 +65,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['join_club'])) {
     $check_stmt->close();
 }
 
-// ==========================================================================
 // FETCH LOGIC: COMPILING ACTIVE CLUBS + LOGGED IN USER MEMBERSHIP MAPS
-// ==========================================================================
-// Left Join validates whether the test matric number holds membership profiles inside each row
+
 $club_query = "
     SELECT c.*, m.membership_status 
     FROM club c 
     LEFT JOIN membership m ON c.club_id = m.club_id AND m.matric_number = ?
-    WHERE c.club_status = 'Active'";
+    WHERE c.club_status = 'active'";
 
 $main_stmt = $conn->prepare($club_query);
 $main_stmt->bind_param("s", $logged_in_matric);
 $main_stmt->execute();
 $club_result = $main_stmt->get_result();
 
-// Keep a copy of the results to loop over again for generating the popup elements
 $clubs_for_modals = [];
 ?>
 
@@ -87,9 +88,7 @@ $clubs_for_modals = [];
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Browse Student Clubs</title>
-
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-
     <link rel="stylesheet" href="style.css">
 </head>
 
@@ -100,10 +99,8 @@ $clubs_for_modals = [];
     <?php echo $message; ?>
 
     <div class="view-wrapper container py-5">
-
         <div class="view-header text-center mb-5">
             <h2>Faculty of Computing Clubs</h2>
-            <p class="subtitle">Explore student organizations, check committees, and view club events.</p>
             <br>
             <hr>
         </div>
@@ -114,15 +111,11 @@ $clubs_for_modals = [];
                 while ($club = $club_result->fetch_assoc()) {
                     $club_id = $club['club_id'];
                     $clubs_for_modals[] = $club;
-
-                    // Assess structural parameters to append verification badges to card front faces
                     $already_joined = !empty($club['membership_status']);
             ?>
-
                     <div class="col-12 col-md-6 col-lg-4">
                         <div class="native-club-card h-100 d-flex flex-column position-relative">
                             <div class="card-inner-content d-flex flex-column h-100 p-3">
-
                                 <div class="d-flex justify-content-between align-items-start mb-2">
                                     <h3 class="m-0 fs-5"><?php echo htmlspecialchars($club['club_name']); ?></h3>
                                     <?php if ($already_joined): ?>
@@ -143,7 +136,6 @@ $clubs_for_modals = [];
                             </div>
                         </div>
                     </div>
-
             <?php
                 }
             } else {
@@ -153,20 +145,44 @@ $clubs_for_modals = [];
         </div>
     </div>
 
-    <?php foreach ($clubs_for_modals as $club) {
+    <?php 
+    foreach ($clubs_for_modals as $club) {
         $club_id = $club['club_id'];
         $already_joined = !empty($club['membership_status']);
 
+        // 1. Fetch Committees
         $comm_query = "SELECT s.name, c.position 
                        FROM committee c 
                        JOIN membership m ON c.membership_id = m.membership_id 
                        JOIN student s ON m.matric_number = s.matric_number 
                        WHERE c.club_id = ?";
-
         $stmt = $conn->prepare($comm_query);
         $stmt->bind_param("i", $club_id);
         $stmt->execute();
         $comm_result = $stmt->get_result();
+
+        // 2. Fetch Events associated with this Club
+        $event_query = "SELECT event_title, event_date, venue, event_status, event_time 
+                        FROM event 
+                        WHERE club_id = ? 
+                        ORDER BY event_date ASC";
+        $stmt_event = $conn->prepare($event_query);
+        $stmt_event->bind_param("i", $club_id);
+        $stmt_event->execute();
+        $event_result = $stmt_event->get_result();
+
+        // Group into arrays
+        $upcoming_events = [];
+        $past_events = [];
+
+        while ($event = $event_result->fetch_assoc()) {
+            // Check status or date logic to split events
+            if ($event['event_status'] === 'completed' || $event['event_date'] < $current_date) {
+                $past_events[] = $event;
+            } else {
+                $upcoming_events[] = $event;
+            }
+        }
     ?>
 
         <div class="modal fade" id="detailsModal_<?php echo $club_id; ?>" tabindex="-1" aria-hidden="true">
@@ -219,22 +235,46 @@ $clubs_for_modals = [];
                         <div class="info-block">
                             <h4>Events & Activities</h4>
                             <div class="events-dual-layout row g-3">
+                                
                                 <div class="col-12 col-md-6">
-                                    <div class="event-pane upcoming-pane border rounded p-3">
-                                        <h5>Upcoming Events</h5>
-                                        <ul class="pane-list list-unstyled mb-0 m-0">
-                                            <li class="text-muted small">No upcoming activities.</li>
+                                    <div class="event-pane upcoming-pane border rounded p-3 bg-white h-100">
+                                        <h5 class="text-primary mb-3">Upcoming Events</h5>
+                                        <ul class="pane-list list-unstyled mb-0">
+                                            <?php if (!empty($upcoming_events)): ?>
+                                                <?php foreach ($upcoming_events as $ev): ?>
+                                                    <li class="mb-3 pb-2 border-bottom">
+                                                        <strong class="d-block text-dark"><?php echo htmlspecialchars($ev['event_title']); ?></strong>
+                                                        <small class="text-muted d-block">📅 <?php echo date('d M Y', strtotime($ev['event_date'])); ?> | 🕒 <?php echo date('h:i A', strtotime($ev['event_time'])); ?></small>
+                                                        <small class="text-secondary d-block">📍 <?php echo htmlspecialchars($ev['venue']); ?></small>
+                                                        <span class="badge bg-info text-dark mt-1 text-capitalize small"><?php echo htmlspecialchars($ev['event_status']); ?></span>
+                                                    </li>
+                                                <?php endforeach; ?>
+                                            <?php else: ?>
+                                                <li class="text-muted small py-2">No upcoming activities scheduled.</li>
+                                            <?php endif; ?>
                                         </ul>
                                     </div>
                                 </div>
+
                                 <div class="col-12 col-md-6">
-                                    <div class="event-pane past-pane border rounded p-3">
-                                        <h5>Past Events</h5>
-                                        <ul class="pane-list list-unstyled mb-0 m-0">
-                                            <li class="text-muted small">No past items recorded.</li>
+                                    <div class="event-pane past-pane border rounded p-3 bg-white h-100">
+                                        <h5 class="text-secondary mb-3">Past Events</h5>
+                                        <ul class="pane-list list-unstyled mb-0">
+                                            <?php if (!empty($past_events)): ?>
+                                                <?php foreach ($past_events as $ev): ?>
+                                                    <li class="mb-2 pb-2 border-bottom opacity-75">
+                                                        <strong class="d-block text-muted"><?php echo htmlspecialchars($ev['event_title']); ?></strong>
+                                                        <small class="text-muted d-block">📅 <?php echo date('d M Y', strtotime($ev['event_date'])); ?></small>
+                                                        <small class="text-muted d-block">📍 <?php echo htmlspecialchars($ev['venue']); ?></small>
+                                                    </li>
+                                                <?php endforeach; ?>
+                                            <?php else: ?>
+                                                <li class="text-muted small py-2">No past items recorded.</li>
+                                            <?php endif; ?>
                                         </ul>
                                     </div>
                                 </div>
+
                             </div>
                         </div>
                     </div>
@@ -249,7 +289,7 @@ $clubs_for_modals = [];
                                 <button type="button" class="btn btn-success fw-bold px-4" disabled style="cursor: not-allowed;">
                                     ✓ Already a Member
                                 </button>
-                            <?php else: ?>
+                            <?php disable: else: ?>
                                 <form method="POST" action="view_club.php" onsubmit="return confirm('Do you want to confirm registration membership into <?php echo htmlspecialchars($club['club_name']); ?>?');">
                                     <input type="hidden" name="club_id" value="<?php echo $club_id; ?>">
                                     <button type="submit" name="join_club" class="btn-submit btn btn-primary fw-bold px-4" style="background: #3498db; border: none;">
@@ -265,6 +305,7 @@ $clubs_for_modals = [];
         </div>
     <?php
         $stmt->close();
+        $stmt_event->close();
     }
     $main_stmt->close();
     $conn->close();
