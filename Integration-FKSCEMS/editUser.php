@@ -129,7 +129,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <label>Status</label>
             <select name="status">
                 <option value="Active" <?php if($user['status'] == 'Active') echo 'selected'; ?>>Active</option>
-                <option value="Pending" <?php if($user['status'] == 'Pending') echo 'selected'; ?>>Pending</option>
                 <option value="Inactive" <?php if($user['status'] == 'Inactive') echo 'selected'; ?>>Inactive</option>
             </select>
         </div>

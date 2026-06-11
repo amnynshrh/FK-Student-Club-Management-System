@@ -43,10 +43,10 @@ $sql_clubs = "SELECT COUNT(*) as total FROM club WHERE club_status = 'active'";
 $result_clubs = $conn->query($sql_clubs);
 $total_clubs = ($result_clubs) ? $result_clubs->fetch_assoc()['total'] : 0;
 
-// Pending Registrations (logic based on user table status)
-$sql_pending = "SELECT COUNT(*) as total FROM student WHERE status = 'Pending'";
-$result_pending = $conn->query($sql_pending);
-$total_pending = ($result_pending) ? $result_pending->fetch_assoc()['total'] : 0;
+// Inactive Users (logic based on user table status)
+$sql_inactive = "SELECT COUNT(*) as total FROM student WHERE status = 'Inactive'";
+$result_inactive = $conn->query($sql_inactive);
+$total_inactive = ($result_inactive) ? $result_inactive->fetch_assoc()['total'] : 0;
 
 // 6. Fetch Recent Registrations (Joining user and student for Names)
 $sql_recent = "SELECT u.username, u.email, u.role, s.name 
@@ -98,7 +98,7 @@ $recent_result = $conn->query($sql_recent);
         <div class="metric-card">
             <div class="metric-info">
                 <span class="metric-label">INACTIVE USERS</span>
-                <h3 class="metric-value" style="color: #dc3545;"><?php echo $total_pending; ?></h3>
+                <h3 class="metric-value" style="color: #dc3545;"><?php echo $total_inactive; ?></h3>
             </div>
             <div class="metric-icon-box red-icon">⚠️</div>
         </div>

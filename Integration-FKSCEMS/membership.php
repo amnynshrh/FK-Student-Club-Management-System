@@ -36,9 +36,10 @@ $count_committees = $conn->query($committee_query)->fetch_assoc()['total'];
 
 $total_combined = $count_students + $count_committees;
 
-// Count Pending (Looking at student table status)
-$pending_query = "SELECT COUNT(*) as total FROM student WHERE status = 'Pending'";
-$total_pending = $conn->query($pending_query)->fetch_assoc()['total'];
+// Count Inactive Users (Looking at student table status)
+$inactive_query = "SELECT COUNT(*) as total FROM student WHERE status = 'Inactive'";
+$total_inactive = $conn->query($inactive_query)->fetch_assoc()['total'];
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -82,8 +83,8 @@ $total_pending = $conn->query($pending_query)->fetch_assoc()['total'];
         </div>
         <div class="metric-card">
             <div class="metric-info">
-                <span class="metric-label">Pending Registrations</span>
-                <h3 class="metric-value" style="color:#dc3545;"><?php echo $total_pending; ?></h3>
+                <span class="metric-label">Inactive Users</span>
+                <h3 class="metric-value" style="color:#dc3545;"><?php echo $total_inactive; ?></h3>
             </div>
             <div class="metric-icon-box red-icon">⚠️</div>
         </div>
