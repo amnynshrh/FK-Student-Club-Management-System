@@ -5,13 +5,126 @@ include ('session.php');
 
 $servername = "localhost";
 $username = "root";
-$password = "Amni102030.";
+$password = "";
 $dbname = "fk_scems_db"; // Ensure this matches your registration/login DB name
 
 $conn = new mysqli($servername, $username, $password, $dbname);
 if ($conn->connect_error) { die("Connection failed: " . $conn->connect_error); }
 
-$user_id = $_SESSION['SESS_USER_ID'];
+$user_id = $_SESSION['user_id'];
+
+function attendance_points_for_status($status)
+{
+    if ($status === 'present') {
+        return 10;
+    }
+    if ($status === 'late') {
+        return 5;
+    }
+    return 0;
+}
+
+function attendance_event_end_datetime($eventDate, $startTime, $endTime)
+{
+    $start = new DateTime($eventDate . ' ' . $startTime);
+    $end = new DateTime($eventDate . ' ' . $endTime);
+    if ($end <= $start) {
+        $end->modify('+1 day');
+    }
+    return $end;
+}
+
+function mark_qr_attendance($conn, $userId, $eventId)
+{
+    date_default_timezone_set('Asia/Kuala_Lumpur');
+
+    $sql = "
+        SELECT
+            er.registration_id,
+            e.event_title,
+            e.event_date,
+            e.event_time,
+            e.end_time,
+            a.attendance_id,
+            a.attendance_status
+        FROM student s
+        INNER JOIN eventregistration er
+        ON s.matric_number = er.matric_number
+        INNER JOIN event e
+        ON er.event_id = e.event_id
+        LEFT JOIN attendance a
+        ON er.registration_id = a.registration_id
+        WHERE s.user_id = ?
+          AND e.event_id = ?
+          AND er.registration_status = 'registered'
+        LIMIT 1
+    ";
+
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("ii", $userId, $eventId);
+    $stmt->execute();
+    $data = $stmt->get_result()->fetch_assoc();
+
+    if (!$data) {
+        return ["success" => false, "message" => "You are not registered for this event."];
+    }
+
+    $existingStatus = strtolower((string) ($data["attendance_status"] ?? ""));
+    if (in_array($existingStatus, ["present", "late"], true)) {
+        return ["success" => true, "message" => "Attendance already recorded as " . ucfirst($existingStatus) . "."];
+    }
+
+    $now = new DateTime();
+    $start = new DateTime($data["event_date"] . " " . $data["event_time"]);
+    $end = attendance_event_end_datetime($data["event_date"], $data["event_time"], $data["end_time"]);
+
+    if ($now < $start) {
+        return ["success" => false, "message" => "Attendance scanning opens when the event starts."];
+    }
+
+    if ($now > $end) {
+        return ["success" => false, "message" => "Attendance scanning has closed for this event."];
+    }
+
+    $lateLimit = clone $start;
+    $lateLimit->modify('+20 minutes');
+    $status = $now <= $lateLimit ? 'present' : 'late';
+    $points = attendance_points_for_status($status);
+    $checkInTime = $now->format('Y-m-d H:i:s');
+    $registrationId = (int) $data["registration_id"];
+
+    if (!empty($data["attendance_id"])) {
+        $update = $conn->prepare("
+            UPDATE attendance
+            SET attendance_status = ?, point_awarded = ?, check_in_time = ?
+            WHERE registration_id = ?
+        ");
+        $update->bind_param("sisi", $status, $points, $checkInTime, $registrationId);
+        $update->execute();
+    } else {
+        $insert = $conn->prepare("
+            INSERT INTO attendance (registration_id, attendance_status, point_awarded, check_in_time)
+            VALUES (?, ?, ?, ?)
+        ");
+        $insert->bind_param("isis", $registrationId, $status, $points, $checkInTime);
+        $insert->execute();
+    }
+
+    return ["success" => true, "message" => "Attendance recorded as " . ucfirst($status) . " for " . $data["event_title"] . "."];
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'qr_checkin') {
+    header('Content-Type: application/json');
+    $eventId = (int) ($_POST['event_id'] ?? 0);
+
+    if ($eventId <= 0) {
+        echo json_encode(["success" => false, "message" => "Invalid QR code."]);
+        exit;
+    }
+
+    echo json_encode(mark_qr_attendance($conn, $user_id, $eventId));
+    exit;
+}
 
 $sql_events = "
 SELECT 
@@ -103,13 +216,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $event_start + (20 * 60);
 
     $attendance_status =
-    $_POST['attendance_status'];
+    strtolower((string) $_POST['attendance_status']);
 
     /* =========================================
     IF ABSENT
     ========================================= */
 
-    if ($attendance_status == 'Absent') {
+    if ($attendance_status == 'absent') {
 
         $point_awarded = 0;
     }
@@ -122,13 +235,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         if ($current_time <= $late_limit) {
 
-            $attendance_status = 'Present';
+            $attendance_status = 'present';
 
             $point_awarded = 10;
 
         } else {
 
-            $attendance_status = 'Late';
+            $attendance_status = 'late';
 
             $point_awarded = 5;
         }
@@ -215,140 +328,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Attendance</title>
     <link rel="stylesheet" href="attendance.css">
+    <script src="https://unpkg.com/html5-qrcode"></script>
 </head>
 <body>
     <?php include ('studentHeader.php') ?>
 
     <div class="page-container">
-        <table class="member-table">
-            <thead>
-                <tr>
-                    <th>Event</th>
-                    <th>Date</th>
-                    <th>Time</th>
-                    <th>Venue</th>
-                    <th>Attendance</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php while($event = $result_events->fetch_assoc()) : ?>
-                <tr>
-                    <td>
-                        <?php echo htmlspecialchars($event['event_title']); ?>
-                    </td>
-                    <td>
-                        <?php echo date('d M Y', strtotime($event['event_date'])); ?>
-                    </td>
-                    <td>
-                        <?php echo date('h:i A', strtotime($event['event_time'])); ?>
-                    </td>
-                    <td>
-                        <?php echo htmlspecialchars($event['venue']); ?>
-                    </td>
-                    <td>
-
-                    <?php
-
-                    $sql_check = "
-
-                    SELECT 
-
-                        attendance_id,
-                        attendance_status,
-                        check_in_time
-
-                    FROM attendance
-
-                    WHERE registration_id = ?
-
-                    LIMIT 1
-
-                    ";
-
-                    $stmt_check = $conn->prepare($sql_check);
-
-                    $stmt_check->bind_param(
-                        "i",
-                        $event['registration_id']
-                    );
-
-                    $stmt_check->execute();
-
-                    $result_check = $stmt_check->get_result();
-
-                    ?>
-
-                    <?php if($result_check->num_rows > 0) : ?>
-
-                        <?php
-
-                        $attendance_data =
-                            $result_check->fetch_assoc();
-
-                        $status =
-                            $attendance_data['attendance_status'];
-
-                        ?>
-
-                        <div class="attendance-result">
-
-                            <!-- STATUS -->
-
-                            <?php if($status == 'Present') : ?>
-
-                                <span class="completed-badge present">
-
-                                    ✓ Present
-
-                                </span>
-
-                            <?php else : ?>
-
-                                <span class="completed-badge absent">
-
-                                    ✗ Absent
-
-                                </span>
-
-                            <?php endif; ?>
-
-                            <!-- CHECK IN TIME -->
-
-                            <small class="checkin-time">
-
-                                Checked in:
-                                <?php
-
-                                echo date(
-                                    'd M Y h:i A',
-                                    strtotime($attendance_data['check_in_time'])
-                                );
-
-                                ?>
-
-                            </small>
-
-                        </div>
-
-                    <?php else : ?>
-
-                        <button
-                            type="button"
-                            class="action-btn edit"
-                            onclick="openProofModal(<?php echo $event['registration_id']; ?>)"
-                        >
-
-                            Attendance
-
-                        </button>
-
-                    <?php endif; ?>
-
-                    </td>
-                </tr>
-                <?php endwhile; ?>
-            </tbody>
-        </table>
+        <div class="qr-scanner-card">
+            <div class="qr-scanner-copy">
+                <h2>Scan Event QR</h2>
+                <p>Allow camera access and scan the event QR code shown by the committee.</p>
+            </div>
+            <div id="reader"></div>
+            <div class="scanner-result" id="scannerResult">
+                No QR scanned yet.
+            </div>
+        </div>
     </div>
     <div id="proofModal" class="modal-overlay">
         <div class="modal-box">
@@ -391,11 +386,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         class="modal-input"
                     >
 
-                        <option value="Present">
+                        <option value="present">
                             Present
                         </option>
 
-                        <option value="Absent">
+                        <option value="absent">
                             Absent
                         </option>
 
@@ -431,6 +426,92 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         document.getElementById('proofModal')
             .style.display = 'none';
     }
+
+    function setScannerResult(message, isSuccess) {
+        const resultBox = document.getElementById('scannerResult');
+        if (!resultBox) {
+            return;
+        }
+        resultBox.textContent = message;
+        resultBox.classList.toggle('success', Boolean(isSuccess));
+        resultBox.classList.toggle('error', !isSuccess);
+    }
+
+    function extractEventId(decodedText) {
+        const rawText = String(decodedText || '').trim();
+
+        if (/^\d+$/.test(rawText)) {
+            return rawText;
+        }
+
+        const legacyMatch = rawText.match(/^event-attendance:(\d+)/);
+        if (legacyMatch) {
+            return legacyMatch[1];
+        }
+
+        try {
+            const scannedUrl = new URL(rawText);
+            return scannedUrl.searchParams.get('event_id');
+        } catch (error) {
+            return null;
+        }
+    }
+
+    function submitQrAttendance(eventId) {
+        return fetch('attendance.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: new URLSearchParams({
+                action: 'qr_checkin',
+                event_id: eventId
+            })
+        }).then(function (response) {
+            return response.json();
+        });
+    }
+
+    function startQrScanner() {
+        const reader = document.getElementById('reader');
+        if (!reader || typeof Html5QrcodeScanner === 'undefined') {
+            setScannerResult('QR scanner library could not be loaded.', false);
+            return;
+        }
+
+        const scanner = new Html5QrcodeScanner('reader', {
+            fps: 10,
+            qrbox: 250
+        });
+
+        scanner.render(function (decodedText) {
+            const eventId = extractEventId(decodedText);
+            if (!eventId) {
+                setScannerResult('Invalid event QR code.', false);
+                return;
+            }
+
+            setScannerResult('QR scanned. Updating attendance...', true);
+            scanner.clear();
+
+            submitQrAttendance(eventId)
+                .then(function (result) {
+                    setScannerResult(result.message || 'Attendance updated.', Boolean(result.success));
+                    if (result.success) {
+                        window.setTimeout(function () {
+                            window.location.reload();
+                        }, 1200);
+                    }
+                })
+                .catch(function () {
+                    setScannerResult('Unable to update attendance. Please try again.', false);
+                });
+        }, function () {});
+    }
+
+    startQrScanner();
     </script>
 </body>
 </html>
+
+
