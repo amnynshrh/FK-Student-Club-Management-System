@@ -39,7 +39,7 @@ $result_admins = $conn->query($sql_admins);
 $total_admins = ($result_admins) ? $result_admins->fetch_assoc()['total'] : 0;
 
 //total clubs from user table
-$sql_clubs = "SELECT COUNT(*) as total FROM user WHERE role = 'Club'";
+$sql_clubs = "SELECT COUNT(*) as total FROM club WHERE club_status = 'active'";
 $result_clubs = $conn->query($sql_clubs);
 $total_clubs = ($result_clubs) ? $result_clubs->fetch_assoc()['total'] : 0;
 
