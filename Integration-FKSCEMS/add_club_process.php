@@ -128,7 +128,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         <script>
             function redirectToForm() {
-                window.location.href = 'create-club.html';
+                window.location.href = 'add_club.php';
             }
         </script>
     </body>
