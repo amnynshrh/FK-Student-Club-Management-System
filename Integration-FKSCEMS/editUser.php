@@ -188,7 +188,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         </div>
 
         <div class="btn-group">
-            <button type="submit" class="btn-save">Save Changes</button>
+            <button type="submit" class="btn-save">Save Updates</button>
             <a href="membership.php" class="btn-cancel">Cancel</a>
         </div>
     </form>
