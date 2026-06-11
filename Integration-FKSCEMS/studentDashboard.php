@@ -26,7 +26,7 @@ if ($conn->connect_error) {
 }
 
 // Map user tracking ID across from session states safely
-$user_id = $_SESSION['user_id']; 
+$user_id = $_SESSION['SESS_USER_ID']; 
 
 // 4. FETCH STUDENT & USER DATA (Joining tables based on your schema)
 $sql_profile = "SELECT u.username, u.email, s.name, s.matric_number, s.course, s.profile_photo 
@@ -62,7 +62,7 @@ if ($user_data) {
 }
 
 //total points calculation for the student
-$user_id = $_SESSION['user_id']; 
+$user_id = $_SESSION['SESS_USER_ID']; 
 $sql_points = "SELECT SUM(a.point_awarded) as total_points 
                FROM student s
                JOIN eventregistration er ON s.matric_number = er.matric_number
@@ -80,7 +80,7 @@ if ($result_points && $row = $result_points->fetch_assoc()) {
 }
 
 // Fetch club memberships with position and status for the logged-in student
-$user_id = $_SESSION['user_id'];
+$user_id = $_SESSION['SESS_USER_ID'];
 $sql_clubs = "SELECT 
                 c.club_name,
                 COALESCE(com.position, 'Member') AS club_position,
