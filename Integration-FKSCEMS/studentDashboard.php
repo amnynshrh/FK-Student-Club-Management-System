@@ -47,17 +47,26 @@ if ($stmt) {
 
 // 5. FETCH CLUB COUNT: Pointed to your real schema table 'membership'
 $club_count = 0;
-if ($user_data) {
+if ($user_data && isset($user_data['matric_number'])) {
     $matric = $user_data['matric_number'];
+    
+    // FIX: Match the database status enum value 'approved' instead of 'Active'
     $sql_clubs = "SELECT COUNT(*) as total 
                   FROM membership
                   WHERE matric_number = ? 
-                  AND membership_status = 'Active'";
+                  AND membership_status = 'approved'";
+                  
     $stmt_c = $conn->prepare($sql_clubs);
     if ($stmt_c) {
         $stmt_c->bind_param("s", $matric);
         $stmt_c->execute();
-        $club_count = $stmt_c->get_result()->fetch_assoc()['total'];
+        $result = $stmt_c->get_result();
+        
+        // Safe verification fetch fallback layout handling
+        if ($result && $row = $result->fetch_assoc()) {
+            $club_count = (int)$row['total'];
+        }
+        $stmt_c->close();
     }
 }
 
