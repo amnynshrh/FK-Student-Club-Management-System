@@ -1,6 +1,11 @@
 <?php
-require_once "config/db.php";
-require_once "includes/functions.php";
+
+$servername = "localhost";
+$username = "root";
+$password = "";
+$dbname = "fk_scems_db"; 
+
+$conn = new mysqli($servername, $username, $password, $dbname);
 
 $eventId = (int) ($_POST["event_id"] ?? $_GET["event_id"] ?? 0);
 $search = trim($_GET["search"] ?? "");
@@ -46,7 +51,8 @@ if ($eventId > 0) {
             event_time,
             end_time,
             venue,
-            event_status
+            event_status,
+            qr_code
         FROM event
         WHERE event_id = ?
         LIMIT 1
@@ -62,6 +68,44 @@ if ($eventId > 0) {
 }
 
 date_default_timezone_set('Asia/Kuala_Lumpur');
+
+if (!function_exists('attendancePointsForStatus')) {
+    function attendancePointsForStatus($status) {
+        $status = strtolower(trim((string) $status));
+        if ($status === 'present') {
+            return 10;
+        }
+        if ($status === 'late') {
+            return 5;
+        }
+        if ($status === 'absent') {
+            return -10;
+        }
+        return 0;
+    }
+}
+
+if (!function_exists('attendancePointsClass')) {
+    function attendancePointsClass($points) {
+        $points = (int) $points;
+        if ($points > 0) {
+            return "badge bg-success-subtle text-success";
+        } elseif ($points < 0) {
+            return "badge bg-danger-subtle text-danger";
+        }
+        return "badge bg-secondary-subtle text-secondary";
+    }
+}
+
+if (!function_exists('formatAttendancePoints')) {
+    function formatAttendancePoints($points) {
+        $points = (int) $points;
+        if ($points > 0) {
+            return "+" . $points;
+        }
+        return (string) $points;
+    }
+}
 if ($_SERVER["REQUEST_METHOD"] === "POST" && $eventId > 0) {
     $attendanceInput = $_POST["attendance"] ?? [];
 
@@ -254,8 +298,73 @@ if ($event) {
             background-color: #ffffff;
         }
 
-        .table> :not(caption)>*>* {
-            border-bottom-color: #eeeff2;
+        .page-container {
+            max-width: 1400px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .event-name {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1c3f95;
+            margin-bottom: 1rem;
+        }
+
+        .event-meta {
+            font-size: 1rem;
+            color: #495057;
+            margin-bottom: .5rem;
+        }
+
+        .event-meta strong {
+            color: #212529;
+        }
+
+        .card {
+            border-radius: 12px;
+        }
+
+        .qr-card {
+            position: sticky;
+            top: 100px;
+        }
+
+        .qr-preview {
+            width: 100%;
+            max-width: 250px;
+            height: auto;
+            margin: auto;
+            display: block;
+            border: 1px solid #eeeff2;
+            border-radius: 10px;
+            padding: .5rem;
+            background: #f8fafc;
+        }
+
+        .search-row {
+            row-gap: 1rem;
+        }
+
+        .attendance-table-scroll {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .attendance-table-scroll thead th {
+            position: sticky;
+            top: 0;
+            background: #fff;
+            z-index: 10;
+        }
+
+        .status-choice {
+            min-width: 90px;
+        }
+
+        .table td,
+        .table th {
+            vertical-align: middle;
         }
 
         .btn-umpsa-teal {
@@ -269,88 +378,31 @@ if ($event) {
             color: white;
         }
 
-        .nav-right .nav-link.active-link {
-            color: #1c3f95;
-            font-weight: 700;
-        }
-
-        .attendance-table-scroll {
-            max-height: 620px;
-            overflow-y: auto;
-        }
-
-        .attendance-table-scroll thead th {
-            position: sticky;
-            top: 0;
-            background: #fff;
-            z-index: 1;
-        }
-        .qr-preview {
-            width: 100%;
-            max-width: 240px;
-            height: auto;
-            border: 1px solid #eeeff2;
-            border-radius: 10px;
-            background-color: #f8fafc;
-            padding: 0.5rem;
-        }
-
-        .status-choice {
-            min-width: 86px;
-            text-align: center;
-        }
-
-        .status-choice input {
-            margin-right: 0.35rem;
-        }
-
         .qr-modal-image {
-            width: min(90vw, 900px);
-            height: auto;
-            border-radius: 10px;
-            background: #fff;
-            padding: 1rem;
+            max-width: 90%;
+            max-height: 80vh;
+            object-fit: contain;
+            border: 10px solid #fff;
+            border-radius: 12px;
+            background-color: #fff;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
 
-        .search-row {
-            gap: 0.75rem;
-        }
-
-        .event-attendance-header .event-name {
-            font-size: 1.75rem;
-            font-weight: 700;
-            color: #1c3f95;
-            margin-bottom: 0.5rem;
-        }
-
-        .event-attendance-header .event-meta {
-            color: #495057;
-            margin-bottom: 0.25rem;
-            font-size: 1rem;
-        }
-
-        .event-attendance-header .event-meta strong {
+        .attendance-points {
+            padding: 0.25em 0.6em;
+            font-size: 0.85em;
             font-weight: 600;
-            color: #212529;
+            border-radius: 4px;
         }
 
-        .points-plus-10 {
-            color: #198754;
-            font-weight: 700;
+        .fs-7 {
+            font-size: 0.85rem;
         }
 
-        .points-plus-5 {
-            color: #009e96;
-            font-weight: 700;
-        }
-
-        .points-minus-10 {
-            color: #dc3545;
-            font-weight: 700;
-        }
-
-        .points-neutral {
-            color: #6c757d;
+        @media (max-width: 991px) {
+            .qr-card {
+                position: static;
+            }
         }
     </style>
 </head>
@@ -359,7 +411,7 @@ if ($event) {
 
     <?php include('committeeHeader.php') ?>
 
-    <main class="student-content">
+    <main class="page-container">
         <?php if (!$event): ?>
             <div class="alert alert-warning mt-4">
                 Invalid or missing event. Please go back to Manage Attendance and select an event.
@@ -379,170 +431,202 @@ if ($event) {
             $startFmt = $startTs ? date("g:i A", $startTs) : (string) $event["event_time"];
             $endFmt = $endTs ? date("g:i A", $endTs) : (string) $event["end_time"];
             ?>
-            <div>
-                <div class="event-attendance-header mb-4">
-                    <h1 class="event-name mb-0"><?php echo htmlspecialchars($event["event_title"]); ?></h1>
-                    <p class="event-meta mb-0">Date: <?php echo htmlspecialchars($eventDateFormatted); ?></p>
-                    <p class="event-meta mb-0">Time: <?php echo htmlspecialchars(trim($startFmt)); ?> - <?php echo htmlspecialchars(trim($endFmt)); ?></p>
-                    <p class="event-meta mb-0">Venue: <?php echo htmlspecialchars((string) $event["venue"]); ?></p>
-                </div>
-                <div class="col-lg-4">
-                    <div class="card border-0 shadow-sm">
-                        <div class="card-body text-center">
-                            <h5 class="mb-3">Event QR Attendance</h5>
-                            <?php
-                            $dummyQr = "https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=Demo+QR+Preview";
-                            $realQrData = "event-attendance:" . (int) $event["event_id"] . ":" . urlencode((string) $event["event_title"]);
-                            $realQr = "https://api.qrserver.com/v1/create-qr-code/?size=900x900&data=" . $realQrData;
-                            ?>
-                            <img src="<?php echo htmlspecialchars($dummyQr); ?>" alt="Dummy QR Code" class="qr-preview mb-3">
-                            <div>
-                                <button
-                                    type="button"
-                                    class="btn btn-umpsa-teal"
-                                    data-bs-toggle="modal"
-                                    data-bs-target="#fullQrModal"
-                                >
-                                    Show Full Page QR
-                                </button>
-                            </div>
+            <div class="row g-4">
+                <!-- Left Column: Back button, Event details, and Attendance Table -->
+                <div class="col-lg-8 col-xl-9 order-2 order-lg-1">
+                    
+                    <!-- Back Button -->
+                    <div class="mb-3">
+                        <a href="manage_attendance.php" class="btn btn-outline-secondary btn-sm">
+                            <i class="bi bi-arrow-left"></i> Back to Manage Attendance
+                        </a>
+                    </div>
+
+                    <!-- Event Info Header -->
+                    <div class="event-attendance-header mb-4">
+                        <h1 class="event-name mb-1"><?php echo htmlspecialchars($event["event_title"]); ?></h1>
+                        <div class="d-flex flex-wrap gap-3 mt-2">
+                            <span class="event-meta">
+                                <i class="bi bi-calendar3 me-1"></i> <strong>Date:</strong> <?php echo htmlspecialchars($eventDateFormatted); ?>
+                            </span>
+                            <span class="event-meta">
+                                <i class="bi bi-clock me-1"></i> <strong>Time:</strong> <?php echo htmlspecialchars(trim($startFmt)); ?> - <?php echo htmlspecialchars(trim($endFmt)); ?>
+                            </span>
+                            <span class="event-meta">
+                                <i class="bi bi-geo-alt me-1"></i> <strong>Venue:</strong> <?php echo htmlspecialchars((string) $event["venue"]); ?>
+                            </span>
+                        </div>
+                    </div>
+
+                    <?php if ($message !== ""): ?>
+                        <div class="alert alert-<?php echo htmlspecialchars($messageType); ?> alert-dismissible fade show" role="alert">
+                            <?php echo htmlspecialchars($message); ?>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    <?php endif; ?>
+
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title fw-bold mb-3 text-dark">Student Attendance Records</h5>
+                            <form method="GET" class="mb-3" id="attendanceFilterForm">
+                                <input type="hidden" name="event_id" value="<?php echo $eventId; ?>">
+                                <div class="row search-row align-items-end">
+                                    <div class="col-md-8">
+                                        <label class="form-label fw-semibold">Search Student</label>
+                                        <input
+                                            type="search"
+                                            class="form-control"
+                                            name="search"
+                                            id="attendanceSearch"
+                                            value="<?php echo htmlspecialchars($search); ?>"
+                                            placeholder="Search by name or matric number"
+                                        >
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-semibold">Status</label>
+                                        <select name="status" class="form-select" id="attendanceStatus">
+                                            <option value="all" <?php echo $statusFilter === "all" ? "selected" : ""; ?>>All</option>
+                                            <option value="present" <?php echo $statusFilter === "present" ? "selected" : ""; ?>>Present</option>
+                                            <option value="absent" <?php echo $statusFilter === "absent" ? "selected" : ""; ?>>Absent</option>
+                                            <option value="late" <?php echo $statusFilter === "late" ? "selected" : ""; ?>>Late</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="mt-3 d-flex gap-2">
+                                    <a href="event_attendance.php?event_id=<?php echo $eventId; ?>" class="btn btn-outline-secondary">Reset</a>
+                                </div>
+                            </form>
+
+                            <form method="POST">
+                                <input type="hidden" name="event_id" value="<?php echo $eventId; ?>">
+                                <div class="table-responsive attendance-table-scroll">
+                                    <table class="table align-middle mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th scope="col">No.</th>
+                                                <th scope="col">Matric No.</th>
+                                                <th scope="col">Student Name</th>
+                                                <th scope="col">Attendance Status</th>
+                                                <th scope="col">Points</th>
+                                                <th scope="col">Check In Time</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php if (empty($attendees)): ?>
+                                                <tr>
+                                                    <td colspan="6" class="text-center py-4 text-muted">No registered students found.</td>
+                                                </tr>
+                                            <?php else: ?>
+                                                <?php foreach ($attendees as $index => $student): ?>
+                                                    <tr>
+                                                        <td><?php echo $index + 1; ?></td>
+                                                        <td><?php echo htmlspecialchars($student["matric_number"]); ?></td>
+                                                        <td><?php echo htmlspecialchars($student["name"]); ?></td>
+                                                        <td>
+                                                            <div class="d-flex flex-wrap gap-2">
+                                                                <?php
+                                                                $current = strtolower((string) $student["attendance_status"]);
+                                                                $regId = (int) $student["registration_id"];
+                                                                ?>
+                                                                <label class="status-choice">
+                                                                    <input
+                                                                        type="radio"
+                                                                        class="status-checkbox"
+                                                                        data-group="attendance-<?php echo $regId; ?>"
+                                                                        name="attendance[<?php echo $regId; ?>]"
+                                                                        value="present"
+                                                                        <?php echo $current === "present" ? "checked" : ""; ?>
+                                                                    >Attend
+                                                                </label>
+                                                                <label class="status-choice">
+                                                                    <input
+                                                                        type="radio"
+                                                                        class="status-checkbox"
+                                                                        data-group="attendance-<?php echo $regId; ?>"
+                                                                        name="attendance[<?php echo $regId; ?>]"
+                                                                        value="absent"
+                                                                        <?php echo $current === "absent" ? "checked" : ""; ?>
+                                                                    >Unattend
+                                                                </label>
+                                                                <label class="status-choice">
+                                                                    <input
+                                                                        type="radio"
+                                                                        class="status-checkbox"
+                                                                        data-group="attendance-<?php echo $regId; ?>"
+                                                                        name="attendance[<?php echo $regId; ?>]"
+                                                                        value="late"
+                                                                        <?php echo $current === "late" ? "checked" : ""; ?>
+                                                                    >Late
+                                                                </label>
+                                                            </div>
+                                                        </td>
+                                                        <td>
+                                                            <?php if ($student["point_awarded"] === null): ?>
+                                                                <span class="text-muted">-</span>
+                                                            <?php else: ?>
+                                                                <?php $points = (int) $student["point_awarded"]; ?>
+                                                                <span class="attendance-points <?php echo htmlspecialchars(attendancePointsClass($points)); ?>">
+                                                                    <?php echo htmlspecialchars(formatAttendancePoints($points)); ?>
+                                                                </span>
+                                                            <?php endif; ?>
+                                                        </td>
+                                                        <td>
+                                                            <?php
+                                                            if (!empty($student["check_in_time"])) {
+                                                                echo htmlspecialchars(date("d M Y, g:i A", strtotime((string) $student["check_in_time"])));
+                                                            } else {
+                                                                echo '<span class="text-muted">-</span>';
+                                                            }
+                                                            ?>
+                                                        </td>
+                                                    </tr>
+                                                <?php endforeach; ?>
+                                            <?php endif; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <?php if (!empty($attendees)): ?>
+                                    <div class="mt-3">
+                                        <button type="submit" class="btn btn-umpsa-teal">Save Attendance</button>
+                                    </div>
+                                <?php endif; ?>
+                            </form>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <?php if ($message !== ""): ?>
-                <div class="alert alert-<?php echo htmlspecialchars($messageType); ?>">
-                    <?php echo htmlspecialchars($message); ?>
-                </div>
-            <?php endif; ?>
-
-            <div class="col-lg-8">
-                <div class="card border-0 shadow-sm">
-                    <div class="card-body">
-                        <form method="GET" class="mb-3" id="attendanceFilterForm">
-                            <input type="hidden" name="event_id" value="<?php echo $eventId; ?>">
-                            <div class="row search-row align-items-end">
-                                <div class="col-md-8">
-                                    <label class="form-label fw-semibold">Search Student</label>
-                                    <input
-                                        type="search"
-                                        class="form-control"
-                                        name="search"
-                                        id="attendanceSearch"
-                                        value="<?php echo htmlspecialchars($search); ?>"
-                                        placeholder="Search by name or matric number"
-                                    >
-                                </div>
-                                <div class="col-md-4">
-                                    <label class="form-label fw-semibold">Status</label>
-                                    <select name="status" class="form-select" id="attendanceStatus">
-                                        <option value="all" <?php echo $statusFilter === "all" ? "selected" : ""; ?>>All</option>
-                                        <option value="present" <?php echo $statusFilter === "present" ? "selected" : ""; ?>>Present</option>
-                                        <option value="absent" <?php echo $statusFilter === "absent" ? "selected" : ""; ?>>Absent</option>
-                                        <option value="late" <?php echo $statusFilter === "late" ? "selected" : ""; ?>>Late</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="mt-3 d-flex gap-2">
-                                <a href="event_attendance.php?event_id=<?php echo $eventId; ?>" class="btn btn-outline-secondary">Reset</a>
-                            </div>
-                        </form>
-
-                        <form method="POST">
-                            <input type="hidden" name="event_id" value="<?php echo $eventId; ?>">
-                            <div class="table-responsive attendance-table-scroll">
-                                <table class="table align-middle mb-0">
-                                    <thead>
-                                        <tr>
-                                            <th scope="col">No.</th>
-                                            <th scope="col">Matric No.</th>
-                                            <th scope="col">Student Name</th>
-                                            <th scope="col">Attendance Status</th>
-                                            <th scope="col">Points</th>
-                                            <th scope="col">Check In Time</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php if (empty($attendees)): ?>
-                                            <tr>
-                                                <td colspan="6" class="text-center py-4 text-muted">No registered students found.</td>
-                                            </tr>
-                                        <?php else: ?>
-                                            <?php foreach ($attendees as $index => $student): ?>
-                                                <tr>
-                                                    <td><?php echo $index + 1; ?></td>
-                                                    <td><?php echo htmlspecialchars($student["matric_number"]); ?></td>
-                                                    <td><?php echo htmlspecialchars($student["name"]); ?></td>
-                                                    <td>
-                                                        <div class="d-flex flex-wrap gap-2">
-                                                            <?php
-                                                            $current = strtolower((string) $student["attendance_status"]);
-                                                            $regId = (int) $student["registration_id"];
-                                                            ?>
-                                                            <label class="status-choice">
-                                                                <input
-                                                                    type="radio"
-                                                                    class="status-checkbox"
-                                                                    data-group="attendance-<?php echo $regId; ?>"
-                                                                    name="attendance[<?php echo $regId; ?>]"
-                                                                    value="present"
-                                                                    <?php echo $current === "present" ? "checked" : ""; ?>
-                                                                >Attend
-                                                            </label>
-                                                            <label class="status-choice">
-                                                                <input
-                                                                    type="radio"
-                                                                    class="status-checkbox"
-                                                                    data-group="attendance-<?php echo $regId; ?>"
-                                                                    name="attendance[<?php echo $regId; ?>]"
-                                                                    value="absent"
-                                                                    <?php echo $current === "absent" ? "checked" : ""; ?>
-                                                                >Unattend
-                                                            </label>
-                                                            <label class="status-choice">
-                                                                <input
-                                                                    type="radio"
-                                                                    class="status-checkbox"
-                                                                    data-group="attendance-<?php echo $regId; ?>"
-                                                                    name="attendance[<?php echo $regId; ?>]"
-                                                                    value="late"
-                                                                    <?php echo $current === "late" ? "checked" : ""; ?>
-                                                                >Late
-                                                            </label>
-                                                        </div>
-                                                    </td>
-                                                    <td>
-                                                        <?php if ($student["point_awarded"] === null): ?>
-                                                            <span class="text-muted">-</span>
-                                                        <?php else: ?>
-                                                            <?php $points = (int) $student["point_awarded"]; ?>
-                                                            <span class="attendance-points <?php echo htmlspecialchars(attendancePointsClass($points)); ?>">
-                                                                <?php echo htmlspecialchars(formatAttendancePoints($points)); ?>
-                                                            </span>
-                                                        <?php endif; ?>
-                                                    </td>
-                                                    <td>
-                                                        <?php
-                                                        if (!empty($student["check_in_time"])) {
-                                                            echo htmlspecialchars(date("d M Y, g:i A", strtotime((string) $student["check_in_time"])));
-                                                        } else {
-                                                            echo '<span class="text-muted">-</span>';
-                                                        }
-                                                        ?>
-                                                    </td>
-                                                </tr>
-                                            <?php endforeach; ?>
-                                        <?php endif; ?>
-                                    </tbody>
-                                </table>
-                            </div>
-                            <?php if (!empty($attendees)): ?>
-                                <div class="mt-3">
-                                    <button type="submit" class="btn btn-umpsa-teal">Save Attendance</button>
+                <!-- Right Column: Sticky Event QR Attendance Card -->
+                <div class="col-lg-4 col-xl-3 order-1 order-lg-2">
+                    <div class="card border-0 shadow-sm qr-card mb-4">
+                        <div class="card-body text-center">
+                            <h5 class="mb-3 fw-bold text-dark">Event QR Attendance</h5>
+                            <?php
+                            $qrFile = trim((string) ($event["qr_code"] ?? ""));
+                            $qrPath = $qrFile !== "" ? "eventsQR/" . basename($qrFile) : "";
+                            $qrExists = $qrPath !== "" && is_file(__DIR__ . DIRECTORY_SEPARATOR . $qrPath);
+                            ?>
+                            <?php if ($qrExists): ?>
+                                <img src="<?php echo htmlspecialchars($qrPath); ?>" alt="Event QR Code" class="qr-preview mb-3">
+                            <?php else: ?>
+                                <div class="alert alert-warning text-start py-2 px-3 fs-7 mb-3">
+                                    <i class="bi bi-exclamation-triangle-fill me-1"></i> QR image has not been generated for this event yet.
+                                    <div class="mt-2">
+                                        <a href="generate_event_qr.php?event_id=<?php echo (int) $event["event_id"]; ?>" class="btn btn-sm btn-warning w-100">Generate now</a>
+                                    </div>
                                 </div>
                             <?php endif; ?>
-                        </form>
+                            <div>
+                                <button
+                                    type="button"
+                                    class="btn btn-umpsa-teal w-100"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#fullQrModal"
+                                    <?php echo $qrExists ? "" : "disabled"; ?>
+                                >
+                                    <i class="bi bi-fullscreen me-1"></i> Show Full Page QR
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -555,7 +639,9 @@ if ($event) {
                             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body d-flex justify-content-center align-items-center">
-                            <img src="<?php echo htmlspecialchars($realQr); ?>" alt="Full Event QR Code" class="qr-modal-image">
+                            <?php if ($qrExists): ?>
+                                <img src="<?php echo htmlspecialchars($qrPath); ?>" alt="Full Event QR Code" class="qr-modal-image">
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
