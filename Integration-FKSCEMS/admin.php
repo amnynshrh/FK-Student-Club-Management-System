@@ -3,7 +3,7 @@
 session_start();
 
 // 2. CHECK LOGIN & ROLE: Standardized to match login.php session keys
-if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'Admin') {
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'Admin') {
     header("Location: login.php");
     exit();
 }
