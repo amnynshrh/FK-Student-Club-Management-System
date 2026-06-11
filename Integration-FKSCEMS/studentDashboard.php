@@ -82,14 +82,22 @@ $sql_points = "SELECT SUM(a.point_awarded) as total_points
                JOIN attendance a ON er.registration_id = a.registration_id
                WHERE s.user_id = ?";
 
+$total_student_points = 0; // Initialize cleanly with a safe numerical base layout
 $stmt_points = $conn->prepare($sql_points);
-$stmt_points->bind_param("i", $user_id);
-$stmt_points->execute();
-$result_points = $stmt_points->get_result();
-$total_student_points = 0;
-if ($result_points && $row = $result_points->fetch_assoc()) {
-    // If they haven't attended events yet, SUM() returns NULL, so we use ?? 0
-    $total_student_points = $row['total_points'] ?? 0; 
+
+if ($stmt_points) {
+    $stmt_points->bind_param("i", $user_id);
+    $stmt_points->execute();
+    $result_points = $stmt_points->get_result();
+    
+    if ($result_points && $row = $result_points->fetch_assoc()) {
+        // If they haven't attended events yet, SUM() returns NULL, fallback to 0 safely
+        $total_student_points = isset($row['total_points']) ? (int)$row['total_points'] : 0; 
+    }
+    $stmt_points->close();
+} else {
+    // Optional fallback error diagnostic handling output injection logic
+    die("Points Engine Component Calculation Error: " . $conn->error);
 }
 
 // Fetch club memberships with position and status for the logged-in student
