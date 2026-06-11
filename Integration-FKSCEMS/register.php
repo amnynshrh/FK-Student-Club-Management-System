@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-// 1. DATABASE CONNECTION
+// Connect to your existing database
 $servername = "localhost";
 $username = "root";
 $password = "";
@@ -13,9 +13,19 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
+// Fetch active clubs for the dynamic committee dropdown selector
+$clubs_list = [];
+$club_sql = "SELECT club_id, club_name FROM club WHERE club_status = 'active' ORDER BY club_name ASC";
+$club_result = $conn->query($club_sql);
+if ($club_result) {
+    while ($row = $club_result->fetch_assoc()) {
+        $clubs_list[] = $row;
+    }
+}
+
 $message = ""; 
 
-// 2. PROCESS FORM SUBMISSION
+// PROCESS FORM SUBMISSION
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Collect Data from Form
     $custom_username = trim($_POST['username']); 
@@ -24,7 +34,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $email           = $_POST['email'];
     
     // ENCRYPTION/HASHING APPLIED HERE
-    // We take the plain text password and hash it securely using standard bcrypt
     $plain_pass      = $_POST['password'];
     $hashed_pass     = password_hash($plain_pass, PASSWORD_DEFAULT);
     
@@ -33,7 +42,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $course          = $_POST['course']; 
     $status          = "active";
 
-    // 3. FILE UPLOAD LOGIC
+    // 1. FILE UPLOAD LOGIC
     $target_dir = "uploads/";
     if (!is_dir($target_dir)) { mkdir($target_dir, 0777, true); }
 
@@ -43,11 +52,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     if (move_uploaded_file($_FILES["profilePhoto"]["tmp_name"], $target_file)) {
         
-        // 4. START TRANSACTION
+        // 2. START TRANSACTION
         $conn->begin_transaction();
 
         try {
-            // A. Insert into 'user' table (Binding the $hashed_pass instead of $plain_pass)
+            // A. Insert into 'user' table
             $sql_user = "INSERT INTO user (username, email, password, role, contact_no) VALUES (?, ?, ?, ?, ?)";
             $stmt_user = $conn->prepare($sql_user);
             $stmt_user->bind_param("sssss", $custom_username, $email, $hashed_pass, $role, $contact);
@@ -61,6 +70,36 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $stmt_stud->bind_param("sissss", $matric_id, $new_user_id, $full_name, $course, $file_name, $status);
             $stmt_stud->execute();
 
+            // C. IF ROLE IS COMMITTEE: Handle structural membership mapping assignment automatically
+            if ($role === 'committee') {
+                $assigned_club_id = intval($_POST['club_id'] ?? 0);
+                $committee_position = trim($_POST['position'] ?? 'Committee Member');
+
+                // Check if an existing membership entry already maps out for this student within the club
+                $check_mem = $conn->prepare("SELECT membership_id FROM membership WHERE matric_number = ? AND club_id = ?");
+                $check_mem->bind_param("si", $matric_id, $assigned_club_id);
+                $check_mem->execute();
+                $mem_res = $check_mem->get_result();
+
+                if ($mem_res->num_rows > 0) {
+                    $membership_id = $mem_res->fetch_assoc()['membership_id'];
+                } else {
+                    // Automatically provision approved membership registration into the targeted club relation row
+                    $ins_mem = $conn->prepare("INSERT INTO membership (matric_number, club_id, membership_status, join_date) VALUES (?, ?, 'approved', NOW())");
+                    $ins_mem->bind_param("si", $matric_id, $assigned_club_id);
+                    $ins_mem->execute();
+                    $membership_id = $conn->insert_id;
+                    $ins_mem->close();
+                }
+                $check_mem->close();
+
+                // Assign positions cleanly into the committee layout table configuration structure
+                $ins_comm = $conn->prepare("INSERT INTO committee (membership_id, club_id, position, assigned_date) VALUES (?, ?, ?, NOW())");
+                $ins_comm->bind_param("iis", $membership_id, $assigned_club_id, $committee_position);
+                $ins_comm->execute();
+                $ins_comm->close();
+            }
+
             $conn->commit();
 
             // Success Popup redirects to membership.php
@@ -73,10 +112,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         } catch (Exception $e) {
             $conn->rollback();
             if (file_exists($target_file)) { unlink($target_file); }
-            $message = "<div class='alert error'>Error: Username, Matric Number, or Email already exists.</div>";
+            $message = "<div class='alert error'>Error: Unique Constraint Violation. Username, Matric Number, or Email address already exists in systemic storage records.</div>";
         }
     } else {
-        $message = "<div class='alert error'>Error uploading profile photo.</div>";
+        $message = "<div class='alert error'>Error uploading profile photo assets onto the server.</div>";
     }
 }
 $conn->close();
@@ -100,6 +139,16 @@ $conn->close();
         .btn-submit:hover { background: #003366; }
         .btn-back { display: block; width: 100%; padding: 12px; background: #6c757d; color: white; text-decoration: none; text-align: center; border-radius: 5px; font-size: 16px; box-sizing: border-box; }
         .btn-back:hover { background: #5a6268; }
+        
+        /* New styling properties for dynamic workflow inputs */
+        .committee-extra-panel {
+            background-color: #f8fafc;
+            border: 1px dashed #cbd5e1;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            display: none; /* Managed smoothly via runtime Javascript handles */
+        }
     </style>
 </head>
 <body>
@@ -109,7 +158,6 @@ $conn->close();
         <div class="header" style="text-align: center; margin-bottom: 25px;">
             <img src="fk.png" alt="Logo" class="logo" style="width: 300px;">
             <h2>Register New Student</h2>
-
         </div>
 
         <?php echo $message; ?>
@@ -163,7 +211,7 @@ $conn->close();
             <div class="row">
                 <div class="input-group">
                     <label>Role</label>
-                    <select name="role" required>
+                    <select name="role" id="roleSelector" onchange="toggleCommitteeInputs()" required>
                         <option value="Student">Student</option>
                         <option value="Committee">Committee Member</option>
                     </select>
@@ -174,12 +222,61 @@ $conn->close();
                 </div>
             </div>
 
+            <div class="committee-extra-panel" id="committeeExtraPanel">
+                <div class="row">
+                    <div class="input-group">
+                        <label>Assigned Club</label>
+                        <select name="club_id" id="clubSelector">
+                            <option value="" disabled selected>-- Choose Target Organization --</option>
+                            <?php foreach ($clubs_list as $club): ?>
+                                <option value="<?php echo $club['club_id']; ?>">
+                                    <?php echo htmlspecialchars($club['club_name']); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Executive Position Role</label>
+                        <select name="position" id="positionSelector">
+                            <option value="President">President</option>
+                            <option value="Secretary">Secretary</option>
+                            <option value="Treasurer">Treasurer</option>
+                            <option value="Committee Member">Committee Member</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
             <button type="submit" class="btn-submit">Register Member</button>
             
             <a href="membership.php" class="btn-back">Back</a>
         </form>
     </div>
 </div>
+
+<script>
+function toggleCommitteeInputs() {
+    const roleSelector = document.getElementById('roleSelector');
+    const extraPanel = document.getElementById('committeeExtraPanel');
+    const clubSelector = document.getElementById('clubSelector');
+    const positionSelector = document.getElementById('positionSelector');
+
+    // Evaluate input rules. If 'Committee' is specified, make fields visible and required.
+    if (roleSelector.value.toLowerCase() === 'committee') {
+        extraPanel.style.display = 'block';
+        clubSelector.setAttribute('required', 'required');
+        positionSelector.setAttribute('required', 'required');
+    } else {
+        extraPanel.style.display = 'none';
+        clubSelector.removeAttribute('required');
+        positionSelector.removeAttribute('required');
+        clubSelector.value = ""; // Clear values if switching back
+    }
+}
+
+// Execute logic verification checks instantly on initial asset compilation renders
+window.addEventListener('DOMContentLoaded', toggleCommitteeInputs);
+</script>
 
 </body>
 </html>
