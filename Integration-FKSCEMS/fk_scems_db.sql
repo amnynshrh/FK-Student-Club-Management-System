@@ -163,10 +163,10 @@ CREATE TABLE `attendance` (
 -- ============================================================
 
 INSERT INTO `user` (`user_id`, `username`, `email`, `password`, `role`, `contact_no`) VALUES
-(1, 'admin01', 'admin01@umpsa.edu.my', 'password123', 'admin', '0123456789'),
-(2, 'CB24001', 'student01@student.umpsa.edu.my', 'password123', 'student', '0123456701'),
-(3, 'CB24002', 'committee01@student.umpsa.edu.my', 'password123', 'committee', '0123456702'),
-(4, 'CB24003', 'student02@student.umpsa.edu.my', 'password123', 'student', '0123456703');
+(1, 'admin01', 'admin01@umpsa.edu.my', '$2y$10$vt5etJ0ANNbIyBI3Ay/0S.oQaU225.aH55nuQvlQu8FEO6U4BeW4W', 'admin', '0123456789'),
+(2, 'CB24001', 'student01@student.umpsa.edu.my', '$2y$10$Aby4urVUeLD8vZzKXzRTrOKukCGly9tiQHUdrK6L5mfENRwc5AZ9O', 'student', '0123456701'),
+(3, 'CB24002', 'committee01@student.umpsa.edu.my', '$2y$10$tkihvaysH11wSm14SB9MSOcMTT0e5pT.eEk0/55N2iHd0goiAy30G', 'committee', '0123456702'),
+(4, 'CB24003', 'student02@student.umpsa.edu.my', '$2y$10$A.nOsXh2fRgSBIpr4sQeJ.AqBxzLJW6wRHj8CSVKpDGSlj9zVF7YW', 'student', '0123456703');
 
 INSERT INTO `admin` (`staff_id`, `user_id`, `name`) VALUES
 (1, 1, 'System Administrator');
