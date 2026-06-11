@@ -1,4 +1,17 @@
 <?php
+session_start();
+
+// SECURITY: Prevent caching sensitive admin dashboards
+header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+header("Cache-Control: post-check=0, pre-check=0", false);
+header("Pragma: no-cache");
+
+// 2. SECURITY GATEKEEPER: Ensure user is logged in as an admin
+if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || strtolower($_SESSION['role']) !== 'admin') {
+    header("Location: login.php");
+    exit();
+}
+
 // Connect to your existing database
 require_once 'config/db.php';
 
