@@ -2,7 +2,7 @@
 session_start();
 function db_connect()
 {
-  $conn = mysqli_connect('localhost', 'root', 'Amni102030.', 'fk_scems_db');
+  $conn = mysqli_connect('localhost', 'root', '', 'fk_scems_db');
   if (!$conn) {
     die('Database connection failed: ' . mysqli_connect_error());
   }
