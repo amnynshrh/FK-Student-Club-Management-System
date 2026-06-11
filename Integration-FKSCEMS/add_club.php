@@ -76,7 +76,7 @@
 
             <!-- Form Actions -->
             <div class="form-actions">
-                <button type="button" class="btn-cancel" onclick="window.history.back()">Cancel</button>
+                <button type="button" class="btn-cancel" onclick="window.location.href='admin_manage_club.php'">Cancel</button>
                 <a href="admin_manage_club.php"><button type="submit" class="btn-submit">Create Club</button></a>
             </div>
         </form>
