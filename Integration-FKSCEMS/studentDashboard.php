@@ -8,7 +8,7 @@ header("Cache-Control: post-check=0, pre-check=0", false);
 header("Pragma: no-cache");
 
 // 2. CHECK LOGIN & ROLE: Aligned to standard login.php session variables
-if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'Student') {
+if (!isset($_SESSION['SESS_USER_ID']) || $_SESSION['role'] !== 'Student') {
     header("Location: login.php");
     exit();
 }

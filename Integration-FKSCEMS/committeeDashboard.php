@@ -25,7 +25,7 @@ if ($conn->connect_error) {
 }
 
 // Map user tracking ID across from standard session states safely
-$user_id = $_SESSION['user_id']; 
+$user_id = $_SESSION['SESS_USER_ID']; 
 
 // 5. FETCH COMMITTEE DATA (Joining user and student tables)
 $user_query = "SELECT u.*, s.name, s.matric_number 
