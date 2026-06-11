@@ -1,5 +1,12 @@
 <?php
-require_once "config/db.php";
+session_start();
+
+$servername = "localhost";
+$username = "root";
+$password = "";
+$dbname = "fk_scems_db"; 
+
+$conn = new mysqli($servername, $username, $password, $dbname);
 
 $events = [];
 $sql = "
@@ -37,15 +44,17 @@ if ($result) {
     <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
 
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-
     <!-- Custom Theme UMPSA -->
     <link rel="stylesheet" href="assets/css/committee.css">
 
     <style>
         body {
             background-color: #ffffff;
+        }
+
+        .student-content {
+            max-width: 1200px;
+            margin: 30px auto;
         }
 
         .table> :not(caption)>*>* {
