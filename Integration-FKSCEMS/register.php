@@ -227,7 +227,7 @@ $conn->close();
                     <div class="input-group">
                         <label>Assigned Club</label>
                         <select name="club_id" id="clubSelector">
-                            <option value="" disabled selected>-- Choose Target Organization --</option>
+                            <option value="" disabled selected>-- Select Club --</option>
                             <?php foreach ($clubs_list as $club): ?>
                                 <option value="<?php echo $club['club_id']; ?>">
                                     <?php echo htmlspecialchars($club['club_name']); ?>
