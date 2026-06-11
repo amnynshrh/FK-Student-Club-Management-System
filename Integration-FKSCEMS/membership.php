@@ -95,7 +95,7 @@ $total_inactive = $conn->query($inactive_query)->fetch_assoc()['total'];
             <h3>Member List</h3>
             <div class="table-controls" style="display: flex; gap: 15px; align-items: center;">
                 <button class="btn-register-new" onclick="window.location.href='register.php'">
-                    + Register New Member
+                    + Register New User
                 </button>
 
                 <form action="membership.php" method="GET" style="display: flex; gap: 5px;">
