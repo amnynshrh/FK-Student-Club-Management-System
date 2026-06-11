@@ -8,7 +8,7 @@ header("Cache-Control: post-check=0, pre-check=0", false);
 header("Pragma: no-cache");
 
 // 2. CHECK LOGIN & ROLE: Aligned to standard login.php session variables
-if (!isset($_SESSION['SESS_USER_ID']) || $_SESSION['role'] !== 'Student') {
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'Student') {
     header("Location: login.php");
     exit();
 }
@@ -26,7 +26,7 @@ if ($conn->connect_error) {
 }
 
 // Map user tracking ID across from session states safely
-$user_id = $_SESSION['SESS_USER_ID']; 
+$user_id = $_SESSION['user_id']; 
 
 // 4. FETCH STUDENT & USER DATA (Joining tables based on your schema)
 $sql_profile = "SELECT u.username, u.email, s.name, s.matric_number, s.course, s.profile_photo 
@@ -62,7 +62,7 @@ if ($user_data) {
 }
 
 //total points calculation for the student
-$user_id = $_SESSION['SESS_USER_ID']; 
+$user_id = $_SESSION['user_id']; 
 $sql_points = "SELECT SUM(a.point_awarded) as total_points 
                FROM student s
                JOIN eventregistration er ON s.matric_number = er.matric_number
@@ -80,7 +80,7 @@ if ($result_points && $row = $result_points->fetch_assoc()) {
 }
 
 // Fetch club memberships with position and status for the logged-in student
-$user_id = $_SESSION['SESS_USER_ID'];
+$user_id = $_SESSION['user_id'];
 $sql_clubs = "SELECT 
                 c.club_name,
                 COALESCE(com.position, 'Member') AS club_position,

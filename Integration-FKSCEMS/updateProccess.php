@@ -3,7 +3,7 @@
 session_start();
 
 // 2. SECURITY: Check if user is logged in (Standardized to match login.php variables)
-if (!isset($_SESSION['SESS_USER_ID'])) {
+if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit();
 }
@@ -22,7 +22,7 @@ if ($conn->connect_error) {
 
 // 4. PROCESS SUBMISSION FORM
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $user_id = $_SESSION['SESS_USER_ID'];
+    $user_id = $_SESSION['user_id'];
     $name    = trim($_POST['name']);
     $email   = trim($_POST['email']);
     $contact = trim($_POST['contactNo']); // Matches name attribute from editProfile.php form
@@ -56,11 +56,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
         $stmt2->execute();
 
-        $conn->commit();
+        $conn->commit();    
 
         // 3. Determine Redirect Route using standard session roles
         // Safely routes to either committeeDashboard.php or studentDashboard.php
-        $goto = (isset($_SESSION['SESS_USER_ID']) && $_SESSION['role'] === 'Committee') ? "committeeDashboard.php" : "studentDashboard.php";
+        $goto = (isset($_SESSION['user_id']) && $_SESSION['role'] === 'Committee') ? "committeeDashboard.php" : "studentDashboard.php";
 
         echo "<script>
                 alert('Profile updated successfully!');

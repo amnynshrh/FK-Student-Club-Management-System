@@ -54,7 +54,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
             if ($access_granted) {
                 // Credentials match and role is authorized! Save tracking keys to Session
-                $_SESSION['SESS_USER_ID']  = $user['user_id'];
+                $_SESSION['user_id']  = $user['user_id'];
                 $_SESSION['username'] = $user['username'];
                 
                 // Capitalize the first letter (e.g. 'Student', 'Committee') so it satisfies your Dashboard check expectations

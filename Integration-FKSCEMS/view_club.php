@@ -5,7 +5,7 @@ session_start();
 // Connect to your existing database
 require_once 'config/db.php';
 
-$user_id = $_SESSION['SESS_USER_ID'];
+$user_id = $_SESSION['user_id'];
 $sql_student = "
 SELECT matric_number
 FROM student

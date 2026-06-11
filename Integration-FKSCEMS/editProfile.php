@@ -3,7 +3,7 @@
 session_start();
 
 // 2. SECURITY: Check if user is logged in (Standardized to match login.php session variables)
-if (!isset($_SESSION['SESS_USER_ID'])) {
+if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit();
 }
@@ -19,7 +19,7 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error); 
 }
 
-$user_id = $_SESSION['SESS_USER_ID']; 
+$user_id = $_SESSION['user_id']; 
 
 // 4. FETCH DATA (JOINING USER AND STUDENT)
 $sql = "SELECT u.email, u.contact_no, s.name, s.profile_photo 
