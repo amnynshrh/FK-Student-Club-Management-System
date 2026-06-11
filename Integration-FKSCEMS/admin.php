@@ -97,7 +97,7 @@ $recent_result = $conn->query($sql_recent);
         </div>
         <div class="metric-card">
             <div class="metric-info">
-                <span class="metric-label">PENDING REGISTRATIONS</span>
+                <span class="metric-label">INACTIVE USERS</span>
                 <h3 class="metric-value" style="color: #dc3545;"><?php echo $total_pending; ?></h3>
             </div>
             <div class="metric-icon-box red-icon">⚠️</div>
