@@ -51,6 +51,24 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['save_committee_roles']
         $update_role_stmt = $conn->prepare("UPDATE committee SET membership_id = ?, assigned_date = CURDATE() WHERE committee_id = ?");
         $insert_role_stmt = $conn->prepare("INSERT INTO committee (membership_id, club_id, position, assigned_date) VALUES (?, ?, ?, CURDATE())");
         $delete_role_stmt = $conn->prepare("DELETE FROM committee WHERE committee_id = ?");
+        $memberSyncStmt = $conn->prepare("
+            SELECT membership_id
+            FROM membership
+            WHERE club_id = ?
+        ");
+
+        $memberSyncStmt->bind_param("i", $club_id);
+        $memberSyncStmt->execute();
+
+        $memberSyncResult = $memberSyncStmt->get_result();
+
+        $membersToSync = [];
+
+        while ($memberRow = $memberSyncResult->fetch_assoc()) {
+            $membersToSync[] = $memberRow;
+        }
+
+        $memberSyncStmt->close();
 
         $save_failed = false;
         $conn->begin_transaction();
@@ -102,7 +120,59 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['save_committee_roles']
                 $message = "<div class='alert-error'>Failed saving committee assignments: " . htmlspecialchars($conn->error) . "</div>";
             }
         } else {
+
             $conn->commit();
+        
+            /*
+            |--------------------------------------------------------------------------
+            | Synchronize user.role with committee table
+            |--------------------------------------------------------------------------
+            */
+        
+            foreach ($membersToSync as $member) {
+        
+                $membership_id = (int)$member['membership_id'];
+        
+                // Check if member currently holds any committee position
+                $checkStmt = $conn->prepare("
+                    SELECT COUNT(*) AS total
+                    FROM committee
+                    WHERE membership_id = ?
+                ");
+        
+                $checkStmt->bind_param("i", $membership_id);
+                $checkStmt->execute();
+        
+                $committeeCount = (int)$checkStmt
+                    ->get_result()
+                    ->fetch_assoc()['total'];
+        
+                $checkStmt->close();
+        
+                $newRole = ($committeeCount > 0)
+                    ? 'committee'
+                    : 'student';
+        
+                $updateStmt = $conn->prepare("
+                    UPDATE user u
+                    INNER JOIN student s
+                        ON u.user_id = s.user_id
+                    INNER JOIN membership m
+                        ON s.matric_number = m.matric_number
+                    SET u.role = ?
+                    WHERE m.membership_id = ?
+                ");
+        
+                $updateStmt->bind_param(
+                    "si",
+                    $newRole,
+                    $membership_id
+                );
+        
+                $updateStmt->execute();
+                $updateStmt->close();
+            }
+        
             $message = "<div class='alert-success'>Committee roles updated successfully!</div>";
         }
 
@@ -497,13 +567,39 @@ $admin_clubs_cache = [];
         }
 
         // 2. Fetch all club members from membership for role assignment dropdowns
-        $members_list_query = "SELECT m.membership_id, s.name, m.matric_number 
-                                FROM membership m 
-                                JOIN student s ON m.matric_number = s.matric_number 
-                                WHERE m.club_id = ?
-                                ORDER BY s.name ASC";
+        $members_list_query = "
+            SELECT
+                m.membership_id,
+                s.name,
+                m.matric_number
+            FROM membership m
+            INNER JOIN student s
+                ON m.matric_number = s.matric_number
+            WHERE m.club_id = ?
+            AND (
+                m.matric_number NOT IN (
+                    SELECT m2.matric_number
+                    FROM committee c
+                    INNER JOIN membership m2
+                        ON c.membership_id = m2.membership_id
+                    WHERE c.club_id <> ?
+                )
+                OR m.membership_id IN (
+                    SELECT c3.membership_id
+                    FROM committee c3
+                    WHERE c3.club_id = ?
+                )
+            )
+            ORDER BY s.name ASC
+        ";
+
         $m_stmt = $conn->prepare($members_list_query);
-        $m_stmt->bind_param("i", $club_id);
+        $m_stmt->bind_param(
+            "iii",
+            $club_id,
+            $club_id,
+            $club_id
+        );
         $m_stmt->execute();
         $members_result = $m_stmt->get_result();
 

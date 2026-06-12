@@ -100,7 +100,7 @@ $member_count = ($member_count_result) ? $member_count_result->fetch_assoc()['to
         <div class="table-container">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                 <h3 class="card-title" style="margin: 0;">Recent Event Participants</h3>
-                <button class="action-btn edit" onclick="window.location.href='manageEvents.php'">+ Create Event</button>
+                <button class="action-btn edit" onclick="window.location.href='manage_events.php'">+ Create Event</button>
             </div>
             <table class="member-table">
                 <thead>
@@ -138,7 +138,7 @@ $member_count = ($member_count_result) ? $member_count_result->fetch_assoc()['to
                 
                 <h3 class="card-title" style="margin-top:20px;">Quick Actions</h3>
                 <div class="event-list">
-                    <button class="action-btn edit" style="width: 100%; margin-bottom: 10px; padding: 12px; cursor: pointer;" onclick="window.location.href='attendanceScanner.php'">📷 Open QR Scanner</button>
+                    <button class="action-btn edit" style="width: 100%; margin-bottom: 10px; padding: 12px; cursor: pointer;" onclick="window.location.href='manage_attendance.php'">📷 Open QR Scanner</button>
                     <button class="action-btn edit" style="width: 100%; margin-bottom: 10px; padding: 12px; background: #6c757d; border:none; color:white; border-radius: 5px; cursor: pointer;">📝 Generate Report</button>
                 </div>
             </div>

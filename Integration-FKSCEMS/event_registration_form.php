@@ -96,7 +96,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             $st = mysqli_prepare($conn, "INSERT INTO eventregistration (matric_number,event_id,registration_status) VALUES (?,?,'registered') ON DUPLICATE KEY UPDATE registration_status='registered', registration_date=NOW()");
             mysqli_stmt_bind_param($st, 'si', $matric, $eventId);
-            echo "Matric Number: " . $matric;
             if (mysqli_stmt_execute($st)) {
                 $waitingUpdate = mysqli_prepare($conn, "UPDATE eventwaitinglist SET waiting_status='registered' WHERE matric_number=? AND event_id=? AND waiting_status='notified'");
                 mysqli_stmt_bind_param($waitingUpdate, 'si', $matric, $eventId);

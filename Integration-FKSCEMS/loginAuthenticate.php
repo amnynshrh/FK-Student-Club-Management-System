@@ -35,8 +35,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $db_role = strtolower($user['role']); 
 
         // Verify the plain text password against the securely encrypted database hash
-        // if (password_verify($input_pass, $user['password'])) {
-        if ($input_pass = $input_pass) {
+        if (password_verify($input_pass, $user['password'])) {
+        // if ($input_pass = $input_pass) {
             
             // 3. ROLE VALIDATION LOGIC (FIXED CASE MATCHING)
             $access_granted = false;
@@ -58,6 +58,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $_SESSION['Login']  = 'YES';
                 $_SESSION['user_id']  = $user['user_id'];
                 $_SESSION['username'] = $user['username'];
+                
+                $stmt = mysqli_prepare(
+                    $conn,
+                    "SELECT matric_number FROM student WHERE user_id = ?"
+                );
+                
+                mysqli_stmt_bind_param($stmt, "i", $user['user_id']);
+                mysqli_stmt_execute($stmt);
+                
+                $row = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
+                
+                $_SESSION['matric'] = $row['matric_number'] ?? null;
                 
                 // Capitalize the first letter (e.g. 'Student', 'Committee') so it satisfies your Dashboard check expectations
                 $_SESSION['role']     = ucfirst($db_role);
