@@ -1,6 +1,8 @@
 <?php
 session_start();
 
+include ('session.php');
+
 // Connect to your existing database
 $servername = "localhost";
 $username = "root";

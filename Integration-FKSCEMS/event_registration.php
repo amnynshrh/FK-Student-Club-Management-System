@@ -1,6 +1,8 @@
 <?php
 session_start();
 
+include ('session.php');
+
 /*
   Module 3: Event Registration
   Lecture concepts used:

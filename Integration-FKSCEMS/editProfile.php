@@ -2,6 +2,8 @@
 // 1. SESSION INITIALIZATION
 session_start();
 
+include ('session.php');
+
 // SECURITY: Prevent browser caching sensitive data
 header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
 header("Cache-Control: post-check=0, pre-check=0", false);

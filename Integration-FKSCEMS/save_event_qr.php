@@ -1,5 +1,7 @@
 <?php
 session_start();
+
+include ('session.php');
 header('Content-Type: application/json');
 
 $conn = mysqli_connect('localhost', 'root', '', 'fk_scems_db');

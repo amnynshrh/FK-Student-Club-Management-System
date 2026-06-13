@@ -1,47 +1,75 @@
 <?php
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    
-    // 1. Sanitize and validate incoming unique ID value
-    $clubId = filter_var($_POST['club_id'], FILTER_VALIDATE_INT);
+session_start();
 
-    if ($clubId === false) {
-        die("Error: Invalid structural identifier target parameter.");
-    }
+include('session.php');
+require_once 'config/db.php';
 
-    /*
-    -----------------------------------------------------------------
-    DATABASE TRANSACTIONS FOR DELETION (MySQLi / PDO Example)
-    -----------------------------------------------------------------
-    // To maintain data health, we must remove records from both tables.
-    // In database design, this is typically handled automatically if you use
-    // "ON DELETE CASCADE" on your foreign keys. Otherwise, clear them manually:
-
-    try {
-        $pdo->beginTransaction();
-
-        // Step A: Clear dependant child records (Committee seats linked to club)
-        $stmt1 = $pdo->prepare("DELETE FROM club_committees WHERE club_id = ?");
-        $stmt1->execute([$clubId]);
-
-        // Step B: Clear the parent entity record
-        $stmt2 = $pdo->prepare("DELETE FROM clubs WHERE id = ?");
-        $stmt2->execute([$clubId]);
-
-        $pdo->commit();
-    } catch (Exception $e) {
-        $pdo->rollBack();
-        die("Database Execution Intercept Failure: " . $e->getMessage());
-    }
-    -----------------------------------------------------------------
-    */
-
-    // Display feedback feedback confirmation details
-    echo "<h2>Club Record Successfully Removed!</h2>";
-    echo "<p>The unique system profile mapping reference <strong>ID: #" . $clubId . "</strong> was purged from backend tracking systems.</p>";
-    
-    echo "<br><a href='delete-club.html'>Return to Dashboard Index View</a>";
-
-} else {
-    echo "Invalid Access Request Method.";
+if ($_SERVER["REQUEST_METHOD"] !== "POST") {
+    header("Location: delete_club.php?error=invalid_request");
+    exit;
 }
-?>
+
+$clubId = filter_var($_POST['club_id'] ?? null, FILTER_VALIDATE_INT);
+
+if (!$clubId) {
+    header("Location: delete_club.php?error=invalid_club");
+    exit;
+}
+
+mysqli_begin_transaction($conn);
+
+try {
+    $eventIds = [];
+    $eventStmt = mysqli_prepare($conn, "SELECT event_id FROM event WHERE club_id = ?");
+    mysqli_stmt_bind_param($eventStmt, "i", $clubId);
+    mysqli_stmt_execute($eventStmt);
+    $eventResult = mysqli_stmt_get_result($eventStmt);
+    while ($row = mysqli_fetch_assoc($eventResult)) {
+        $eventIds[] = (int) $row['event_id'];
+    }
+
+    if ($eventIds) {
+        $attendanceStmt = mysqli_prepare($conn, "DELETE a FROM attendance a INNER JOIN eventregistration er ON er.registration_id = a.registration_id WHERE er.event_id = ?");
+        $waitingStmt = mysqli_prepare($conn, "DELETE FROM eventwaitinglist WHERE event_id = ?");
+        $registrationStmt = mysqli_prepare($conn, "DELETE FROM eventregistration WHERE event_id = ?");
+        $eventDeleteStmt = mysqli_prepare($conn, "DELETE FROM event WHERE event_id = ?");
+
+        foreach ($eventIds as $eventId) {
+            mysqli_stmt_bind_param($attendanceStmt, "i", $eventId);
+            mysqli_stmt_execute($attendanceStmt);
+
+            mysqli_stmt_bind_param($waitingStmt, "i", $eventId);
+            mysqli_stmt_execute($waitingStmt);
+
+            mysqli_stmt_bind_param($registrationStmt, "i", $eventId);
+            mysqli_stmt_execute($registrationStmt);
+
+            mysqli_stmt_bind_param($eventDeleteStmt, "i", $eventId);
+            mysqli_stmt_execute($eventDeleteStmt);
+        }
+    }
+
+    $stmt = mysqli_prepare($conn, "DELETE FROM committee WHERE club_id = ?");
+    mysqli_stmt_bind_param($stmt, "i", $clubId);
+    mysqli_stmt_execute($stmt);
+
+    $stmt = mysqli_prepare($conn, "DELETE FROM membership WHERE club_id = ?");
+    mysqli_stmt_bind_param($stmt, "i", $clubId);
+    mysqli_stmt_execute($stmt);
+
+    $stmt = mysqli_prepare($conn, "DELETE FROM club WHERE club_id = ?");
+    mysqli_stmt_bind_param($stmt, "i", $clubId);
+    mysqli_stmt_execute($stmt);
+
+    if (mysqli_stmt_affected_rows($stmt) < 1) {
+        throw new RuntimeException("Club not found.");
+    }
+
+    mysqli_commit($conn);
+    header("Location: delete_club.php?deleted=1");
+    exit;
+} catch (Throwable $th) {
+    mysqli_rollback($conn);
+    header("Location: delete_club.php?error=delete_failed");
+    exit;
+}

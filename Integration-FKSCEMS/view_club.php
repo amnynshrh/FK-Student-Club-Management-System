@@ -2,6 +2,8 @@
 // Start the session
 session_start();
 
+include ('session.php');
+
 // Connect to your existing database
 require_once 'config/db.php';
 

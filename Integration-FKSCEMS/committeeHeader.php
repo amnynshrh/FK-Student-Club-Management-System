@@ -3,7 +3,7 @@
 $current_page = basename($_SERVER['PHP_SELF']);
 
 $committee_name = $user_data['name'] ?? $_SESSION['name'] ?? $_SESSION['user_name'] ?? '';
-if ($committee_name === '' && !empty($_SESSION['SESS_USER_ID'])) {
+if ($committee_name === '' && !empty($_SESSION['user_id'])) {
     $header_conn = $conn ?? null;
     if (!$header_conn && file_exists(__DIR__ . '/config/db.php')) {
         require __DIR__ . '/config/db.php';
@@ -12,7 +12,7 @@ if ($committee_name === '' && !empty($_SESSION['SESS_USER_ID'])) {
 
     if ($header_conn) {
         $header_stmt = mysqli_prepare($header_conn, "SELECT s.name FROM student s WHERE s.user_id = ? LIMIT 1");
-        mysqli_stmt_bind_param($header_stmt, 'i', $_SESSION['SESS_USER_ID']);
+        mysqli_stmt_bind_param($header_stmt, 'i', $_SESSION['user_id']);
         mysqli_stmt_execute($header_stmt);
         $header_user = mysqli_fetch_assoc(mysqli_stmt_get_result($header_stmt));
         $committee_name = $header_user['name'] ?? '';

@@ -1,6 +1,8 @@
 <?php
 session_start();
 
+include ('session.php');
+
 // 1. SECURITY CHECK: Ensure user is logged in via user_id session and has Admin role privileges
 if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role'] !== 'Admin') {
     header("Location: login.php");

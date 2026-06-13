@@ -401,3 +401,25 @@ canvas {
         grid-column: 2;
     }
 }
+
+.report-action {
+    margin-top: 30px;
+    text-align: right;
+}
+
+.generate-report-btn {
+    background: #eb2525;
+    color: #fff;
+    border: none;
+    padding: 12px 28px;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    font-family:Verdana, Geneva, Tahoma, sans-serif;
+    cursor: pointer;
+    transition: 0.3s ease;
+}
+
+.generate-report-btn:hover {
+    background: #1d4ed8;
+}

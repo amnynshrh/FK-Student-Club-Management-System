@@ -5,7 +5,16 @@ session_start();
 // Check for error flags sent back from authenticateLogin.php
 $error_msg = "";
 if (isset($_GET['error']) && $_GET['error'] == '1') {
-    $error_msg = "Invalid username, password, or role.";
+    $error_msg = "Invalid username or password.";
+}
+if (isset($_GET['error']) && $_GET['error'] == '2') {
+    $error_msg = "Role mismatched.";
+}
+if (isset($_GET['error']) && $_GET['error'] == '3') {
+    $error_msg = "No existing account found.";
+}
+if (isset($_GET['error']) && $_GET['error'] == 'session_ended') {
+    $error_msg = "Session ended. Please login again.";
 }
 ?>
 

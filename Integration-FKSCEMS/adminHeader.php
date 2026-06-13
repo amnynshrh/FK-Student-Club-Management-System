@@ -115,21 +115,28 @@ if ($admin_name === '') {
                     Event Dashboard
                 </a>
             </li>
-            <li>
-                <a 
-                    href="attendance_dashboard.php"
-                    class="<?php echo ($current_page == 'attendance_dashboard.php') ? 'active' : ''; ?>"
-                >
-                    Attendance Dashboard
+            <li class="dropdown">
+                <a href="attendance_dashboard.php" class="<?php echo ($current_page == 'attendance_dashboard.php') ? 'active' : ''; ?>">
+                    Attendance Dashboard ▾
                 </a>
-            </li>
-            <li>
-                <a 
-                    href="student_list.php"
-                    class="<?php echo ($current_page == 'student_list.php' || $current_page == 'student_participation.php') ? 'active' : ''; ?>"
-                >
-                    Participation Tracking
-                </a>
+                <ul class="dropdown-menu">
+                    <li>
+                        <a 
+                            href="attendance_dashboard.php"
+                            class="<?php echo ($current_page == 'attendance_dashboard.php') ? 'active' : ''; ?>"
+                        >
+                            Attendance Dashboard
+                        </a>
+                    </li>
+                    <li>
+                        <a 
+                            href="student_list.php"
+                            class="<?php echo ($current_page == 'student_list.php' || $current_page == 'student_participation.php') ? 'active' : ''; ?>"
+                        >
+                            Participation Tracking
+                        </a>
+                    </li>
+                </ul>
             </li>
             <li>
                 <a

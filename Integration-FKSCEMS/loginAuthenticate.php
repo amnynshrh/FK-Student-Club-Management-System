@@ -1,6 +1,7 @@
 <?php
 // 1. SESSION INITIALIZATION
 session_start();
+setcookie("session_timeout", "active", time() + 300, "/");
 
 $servername = "localhost";
 $username = "root";
@@ -34,9 +35,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         // Convert the database value to lowercase to protect against casing conflicts
         $db_role = strtolower($user['role']); 
 
-        // Accept hashed passwords from registration and plain seed passwords from the SQL file.
-        $password_matches = password_verify($input_pass, $user['password']) || hash_equals($user['password'], $input_pass);
-        if ($password_matches) {
+        // Verify the plain text password against the securely encrypted database hash
+        if (password_verify($input_pass, $user['password'])) {
         // if ($input_pass = $input_pass) {
             
             // 3. ROLE VALIDATION LOGIC (FIXED CASE MATCHING)
@@ -105,7 +105,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 exit();
             } else {
                 // Role mismatch handler (e.g., a real Student account selecting "Admin" or "Committee")
-                header("Location: login.php?error=1");
+                header("Location: login.php?error=2");
                 exit();
             }
 
@@ -116,7 +116,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
     } else {
         // No user found matching that username
-        header("Location: login.php?error=1");
+        header("Location: login.php?error=3");
         exit();
     }
     

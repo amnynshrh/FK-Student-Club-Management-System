@@ -1,5 +1,7 @@
 <?php
 session_start();
+
+include ('session.php');
 function db_connect()
 {
   $conn = mysqli_connect('localhost', 'root', '', 'fk_scems_db');

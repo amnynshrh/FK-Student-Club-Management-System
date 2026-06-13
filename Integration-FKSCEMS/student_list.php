@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-include 'session.php';
+include ('session.php');
 
 // 2. Database Connection
 $servername = "localhost";

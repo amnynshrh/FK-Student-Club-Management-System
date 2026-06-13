@@ -1,6 +1,8 @@
 <?php
 session_start();
 
+include ('session.php');
+
 $servername = "localhost";
 $username = "root";
 $password = "";
@@ -134,7 +136,7 @@ $clubAttendanceRows = fetch_all(
     $conn,
     "SELECT c.club_name,
         ROUND(
-            SUM(CASE WHEN er.registration_status = 'registered' AND LOWER(a.attendance_status) = 'present' THEN 1 ELSE 0 END)
+            SUM(CASE WHEN er.registration_status = 'registered' AND LOWER(a.attendance_status) IN ('present', 'late') THEN 1 ELSE 0 END)
             / NULLIF(COUNT(DISTINCT CASE WHEN er.registration_status = 'registered' THEN er.registration_id END), 0) * 100,
             2
         ) AS attendance_rate
@@ -180,21 +182,17 @@ if ($club_name !== "") {
 
 $statusRows = fetch_all(
     $conn,
-    "SELECT attendance_status, COUNT(DISTINCT registration_id) AS total
-     FROM (
-        SELECT
-            er.registration_id,
-            CASE
-                WHEN MAX(a.attendance_id) IS NULL THEN 'Not Marked'
-                ELSE CONCAT(UCASE(LEFT(MAX(a.attendance_status), 1)), SUBSTRING(MAX(a.attendance_status), 2))
-            END AS attendance_status
-        FROM event e
-        INNER JOIN club c ON e.club_id = c.club_id
-        INNER JOIN eventregistration er ON e.event_id = er.event_id AND er.registration_status = 'registered'
-        LEFT JOIN attendance a ON er.registration_id = a.registration_id
-        $where_sql
-        GROUP BY er.registration_id
-     ) attendance_summary
+    "SELECT
+        CASE
+            WHEN a.attendance_id IS NULL THEN 'Not Marked'
+            ELSE CONCAT(UCASE(LEFT(a.attendance_status, 1)), SUBSTRING(a.attendance_status, 2))
+        END AS attendance_status,
+        COUNT(DISTINCT er.registration_id) AS total
+     FROM event e
+     INNER JOIN club c ON e.club_id = c.club_id
+     INNER JOIN eventregistration er ON e.event_id = er.event_id AND er.registration_status = 'registered'
+     LEFT JOIN attendance a ON er.registration_id = a.registration_id
+     $where_sql
      GROUP BY attendance_status
      ORDER BY total DESC",
     $types,
@@ -483,6 +481,17 @@ $activeFilterCount = ($club_name !== "" ? 1 : 0) + ($month_year !== "" ? 1 : 0) 
                 </div>
             </div>
         </section>
+        <div class="report-action">
+        <form action="attendance_report_pdf.php" method="GET" target="_blank">
+            <input type="hidden" name="club_name" value="<?php echo h($club_name); ?>">
+            <input type="hidden" name="month_year" value="<?php echo h($month_year); ?>">
+            <input type="hidden" name="event_name" value="<?php echo h($event_name); ?>">
+            <button type="submit" class="generate-report-btn">
+                <i class="text"></i>
+                Generate Report
+            </button>
+        </form>
+        </div>
     </div>
 
     <script>

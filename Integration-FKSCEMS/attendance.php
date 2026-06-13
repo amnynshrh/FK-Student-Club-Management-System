@@ -109,7 +109,7 @@ function mark_qr_attendance($conn, $userId, $eventId)
         $insert->bind_param("isis", $registrationId, $status, $points, $checkInTime);
         $insert->execute();
     }
-
+    
     return ["success" => true, "message" => "Attendance recorded as " . ucfirst($status) . " for " . $data["event_title"] . "."];
 }
 
@@ -328,6 +328,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Attendance</title>
     <link rel="stylesheet" href="attendance.css">
+    <style>
+        body {
+            background-color: #f4f7f6;
+        }
+    </style>
     <script src="https://unpkg.com/html5-qrcode"></script>
 </head>
 <body>
@@ -343,75 +348,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <div class="scanner-result" id="scannerResult">
                 No QR scanned yet.
             </div>
-        </div>
-    </div>
-    <div id="proofModal" class="modal-overlay">
-        <div class="modal-box">
-            <div class="modal-header">
-                <h3>Submit Attendance Proof</h3>
-                <button
-                    class="close-btn"
-                    onclick="closeProofModal()"
-                >
-                    &times;
-                </button>
-            </div>
-            <form
-                method="POST"
-                action=""
-                enctype="multipart/form-data"
-            >
-                <input
-                    type="hidden"
-                    name="registration_id"
-                    id="registrationIdInput"
-                >
-                <div class="mb-3">
-                    <label class="modal-label">
-                        Upload Proof/Reason (If Absent)
-                    </label>
-                    <input
-                        type="file"
-                        name="proof_file"
-                        class="modal-input"
-                        required
-                    >
-                </div>
-                <div class="mb-3">
-                    <label class="modal-label">
-                        Attendance Status
-                    </label>
-                    <select
-                        name="attendance_status"
-                        class="modal-input"
-                    >
-
-                        <option value="present">
-                            Present
-                        </option>
-
-                        <option value="absent">
-                            Absent
-                        </option>
-
-                    </select>
-                </div>
-                <div class="modal-actions">
-                    <button
-                        type="button"
-                        class="cancel-btn"
-                        onclick="closeProofModal()"
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        type="submit"
-                        class="submit-btn"
-                    >
-                        Submit
-                    </button>
-                </div>
-            </form>
         </div>
     </div>
     <script>
@@ -513,5 +449,3 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     </script>
 </body>
 </html>
-
-

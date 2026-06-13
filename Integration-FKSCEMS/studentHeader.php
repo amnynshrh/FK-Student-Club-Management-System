@@ -175,39 +175,4 @@ if ($student_name === '') {
     white-space: nowrap;
 }
 
-body .top-navigation {
-    background: #ffffff !important;
-    border-bottom: 1px solid #ddd !important;
-    padding: 10px 0 !important;
-}
-
-body .top-navigation .nav-wrapper {
-    display: flex !important;
-    justify-content: space-between !important;
-    align-items: center !important;
-    padding: 0 20px !important;
-}
-
-body .top-navigation .menu-links {
-    display: flex !important;
-    gap: 10px !important;
-    margin: 0 !important;
-    padding: 0 !important;
-}
-
-body .top-navigation .menu-links a {
-    color: #444 !important;
-    font-size: 13px !important;
-    font-weight: 600 !important;
-    text-transform: uppercase !important;
-    padding: 10px 15px !important;
-    border-radius: 5px !important;
-}
-
-body .top-navigation .menu-links a.active {
-    background-color: #eef5ff !important;
-    color: var(--fk-blue) !important;
-    border-bottom: 3px solid var(--fk-blue) !important;
-}
-
 </style>

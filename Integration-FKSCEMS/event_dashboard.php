@@ -1,6 +1,8 @@
 <?php
 session_start();
 
+include ('session.php');
+
 if (
     !(
         (isset($_SESSION['SESS_ROLE']) && strtolower((string)$_SESSION['SESS_ROLE']) === 'admin') ||

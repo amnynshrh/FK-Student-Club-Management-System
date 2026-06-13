@@ -295,7 +295,7 @@ if ($event) {
 
     <style>
         body {
-            background-color: #ffffff;
+            background-color: #f4f7f6;
         }
 
         .page-container {

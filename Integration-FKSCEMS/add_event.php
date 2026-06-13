@@ -1,5 +1,7 @@
 <?php
 session_start();
+
+include ('session.php');
 function db_connect()
 {
   $conn = mysqli_connect('localhost', 'root', '', 'fk_scems_db');
@@ -159,8 +161,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
   if ($event['title'] === '' || $event['description'] === '' || $event['date'] === '' || $event['startTime'] === '' || $event['endTime'] === '' || $event['venue'] === '' || $event['participants'] === '') {
     $message = 'Please fill in all required fields.';
-  } elseif (strtotime($event['endTime']) <= strtotime($event['startTime'])) {
-    $message = 'End time must be after start time.';
+  } elseif ($event['endTime'] === $event['startTime']) {
+    $message = 'End time cannot be the same as start time.';
   } elseif (has_booking_clash($conn, $event['date'], $event['startTime'], $event['endTime'], $event['venue'])) {
     $message = 'Booking clash detected. This venue is already booked during the selected time.';
   } elseif (!$committeeId || !$clubId) {
@@ -427,10 +429,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         return false;
       }
-      if (end <= start) {
+      if (end === start) {
         if (box) {
           box.classList.remove('d-none');
-          box.innerHTML = 'End time must be after start time.';
+          box.innerHTML = 'End time cannot be the same as start time.';
         }
         return false;
       }

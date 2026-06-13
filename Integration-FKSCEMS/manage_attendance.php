@@ -1,6 +1,8 @@
 <?php
 session_start();
 
+include ('session.php');
+
 $servername = "localhost";
 $username = "root";
 $password = "";
@@ -9,6 +11,7 @@ $dbname = "fk_scems_db";
 $conn = new mysqli($servername, $username, $password, $dbname);
 
 $events = [];
+$committee_id = $_SESSION['SESS_COMMITTEE_ID'];
 $sql = "
     SELECT
         event_id,
@@ -19,6 +22,7 @@ $sql = "
         venue,
         event_status
     FROM event
+    WHERE committee_id = '$committee_id'
     ORDER BY event_date DESC, event_time DESC
 ";
 
@@ -119,6 +123,10 @@ if ($result) {
             color: #fff;
             line-height: 1.2;
             white-space: nowrap;
+        }
+
+        .status-badge.open {
+            background-color: #009e96;
         }
 
         .event-status .status-badge.ongoing {

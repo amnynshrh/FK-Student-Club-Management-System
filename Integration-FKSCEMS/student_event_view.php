@@ -1,6 +1,8 @@
 <?php
 session_start();
 
+include ('session.php');
+
 /*
   Student View Event Details
   Lecture concepts used:

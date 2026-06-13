@@ -1,5 +1,7 @@
 <?php
 session_start();
+
+include ('session.php');
 function db_connect()
 {
   $conn = mysqli_connect('localhost', 'root', '', 'fk_scems_db');
@@ -116,10 +118,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
   }
 }
-$events = mysqli_query($conn, "SELECT e.*, c.club_name, COUNT(er.registration_id) registered_count FROM event e INNER JOIN club c ON c.club_id=e.club_id LEFT JOIN eventregistration er ON er.event_id=e.event_id AND er.registration_status='registered' GROUP BY e.event_id ORDER BY e.event_date DESC");
-$total = mysqli_fetch_row(mysqli_query($conn, "SELECT COUNT(*) FROM event"))[0] ?? 0;
-$upcoming = mysqli_fetch_row(mysqli_query($conn, "SELECT COUNT(*) FROM event WHERE event_status='upcoming'"))[0] ?? 0;
-$completed = mysqli_fetch_row(mysqli_query($conn, "SELECT COUNT(*) FROM event WHERE event_status='completed'"))[0] ?? 0;
+$committee_id = $_SESSION['SESS_COMMITTEE_ID'];
+$events = mysqli_query($conn, "SELECT e.*, c.club_name, COUNT(er.registration_id) registered_count FROM event e INNER JOIN club c ON c.club_id=e.club_id LEFT JOIN eventregistration er ON er.event_id=e.event_id AND er.registration_status='registered' WHERE e.committee_id = '$committee_id' GROUP BY e.event_id ORDER BY e.event_date DESC");
+$total = mysqli_fetch_row(mysqli_query($conn, "SELECT COUNT(*) FROM event WHERE committee_id = '$committee_id' "))[0] ?? 0;
+$upcoming = mysqli_fetch_row(mysqli_query($conn, "SELECT COUNT(*) FROM event WHERE committee_id = '$committee_id' AND event_status='upcoming'"))[0] ?? 0;
+$completed = mysqli_fetch_row(mysqli_query($conn, "SELECT COUNT(*) FROM event WHERE committee_id = '$committee_id' AND event_status='completed'"))[0] ?? 0;
 ?>
 <!DOCTYPE html>
 

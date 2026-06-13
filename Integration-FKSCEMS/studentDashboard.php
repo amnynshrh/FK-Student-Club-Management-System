@@ -2,6 +2,8 @@
 
 session_start();
 
+include ('session.php');
+
 // SECURITY: Prevent caching
 header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
 header("Cache-Control: post-check=0, pre-check=0", false);
@@ -47,6 +49,61 @@ if ($stmt) {
     $user_data = $result->fetch_assoc();
 } else {
     die("Profile Query Error: " . $conn->error);
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'quit_club') {
+    $club_id_to_quit = (int) ($_POST['club_id'] ?? 0);
+    $matric_to_quit = $user_data['matric_number'] ?? '';
+
+    if ($club_id_to_quit > 0 && $matric_to_quit !== '') {
+        mysqli_begin_transaction($conn);
+
+        try {
+            $membership_stmt = $conn->prepare("SELECT membership_id FROM membership WHERE matric_number = ? AND club_id = ? LIMIT 1");
+            $membership_stmt->bind_param("si", $matric_to_quit, $club_id_to_quit);
+            $membership_stmt->execute();
+            $membership = $membership_stmt->get_result()->fetch_assoc();
+
+            if ($membership) {
+                $membership_id = (int) $membership['membership_id'];
+
+                $committee_stmt = $conn->prepare("DELETE FROM committee WHERE membership_id = ? AND club_id = ?");
+                $committee_stmt->bind_param("ii", $membership_id, $club_id_to_quit);
+                $committee_stmt->execute();
+
+                $delete_membership_stmt = $conn->prepare("DELETE FROM membership WHERE membership_id = ?");
+                $delete_membership_stmt->bind_param("i", $membership_id);
+                $delete_membership_stmt->execute();
+
+                $remaining_committee_stmt = $conn->prepare("
+                    SELECT COUNT(*) AS total
+                    FROM committee cm
+                    INNER JOIN membership m ON cm.membership_id = m.membership_id
+                    WHERE m.matric_number = ?
+                ");
+                $remaining_committee_stmt->bind_param("s", $matric_to_quit);
+                $remaining_committee_stmt->execute();
+                $remaining_committee = (int) ($remaining_committee_stmt->get_result()->fetch_assoc()['total'] ?? 0);
+
+                if ($remaining_committee === 0) {
+                    $role_stmt = $conn->prepare("UPDATE user SET role = 'student' WHERE user_id = ? AND role = 'committee'");
+                    $role_stmt->bind_param("i", $user_id);
+                    $role_stmt->execute();
+                    if (strtolower((string) ($_SESSION['role'] ?? '')) === 'committee') {
+                        $_SESSION['role'] = 'Student';
+                    }
+                }
+            }
+
+            mysqli_commit($conn);
+            header("Location: studentDashboard.php?quit=success");
+            exit();
+        } catch (Throwable $th) {
+            mysqli_rollback($conn);
+            header("Location: studentDashboard.php?quit=error");
+            exit();
+        }
+    }
 }
 
 // 5. FETCH CLUB COUNT: Pointed to your real schema table 'membership'
@@ -98,6 +155,70 @@ if ($stmt_points) {
 } else {
     // Optional fallback error diagnostic handling output injection logic
     die("Points Engine Component Calculation Error: " . $conn->error);
+}
+
+$attendance_rate = 0;
+$sql_attendance_rate = "
+    SELECT
+        COUNT(DISTINCT er.registration_id) AS total_registered,
+        SUM(CASE WHEN LOWER(a.attendance_status) IN ('present', 'late') THEN 1 ELSE 0 END) AS total_attended
+    FROM student s
+    INNER JOIN eventregistration er ON s.matric_number = er.matric_number AND er.registration_status = 'registered'
+    LEFT JOIN attendance a ON er.registration_id = a.registration_id
+    WHERE s.user_id = ?
+";
+$stmt_attendance = $conn->prepare($sql_attendance_rate);
+if ($stmt_attendance) {
+    $stmt_attendance->bind_param("i", $user_id);
+    $stmt_attendance->execute();
+    $attendance_data = $stmt_attendance->get_result()->fetch_assoc();
+    $registered_count = (int) ($attendance_data['total_registered'] ?? 0);
+    $attended_count = (int) ($attendance_data['total_attended'] ?? 0);
+    $attendance_rate = $registered_count > 0 ? round(($attended_count / $registered_count) * 100) : 0;
+    $stmt_attendance->close();
+}
+
+$available_events = [];
+$sql_available_events = "
+    SELECT
+        e.event_id,
+        e.event_title,
+        e.event_date,
+        e.event_time,
+        e.venue,
+        c.club_name,
+        e.max_participant,
+        COUNT(er_all.registration_id) AS registered_count
+    FROM event e
+    INNER JOIN club c ON e.club_id = c.club_id
+    LEFT JOIN eventregistration er_all
+        ON e.event_id = er_all.event_id
+       AND er_all.registration_status = 'registered'
+    WHERE e.registration_open = 1
+      AND e.event_status NOT IN ('completed', 'cancelled')
+      AND NOW() < CONCAT(e.event_date, ' ', e.event_time)
+      AND NOT EXISTS (
+          SELECT 1
+          FROM eventregistration er_mine
+          INNER JOIN student s_mine ON er_mine.matric_number = s_mine.matric_number
+          WHERE er_mine.event_id = e.event_id
+            AND s_mine.user_id = ?
+            AND er_mine.registration_status = 'registered'
+      )
+    GROUP BY e.event_id, e.event_title, e.event_date, e.event_time, e.venue, c.club_name, e.max_participant
+    HAVING registered_count < e.max_participant
+    ORDER BY e.event_date ASC, e.event_time ASC
+    LIMIT 5
+";
+$stmt_available = $conn->prepare($sql_available_events);
+if ($stmt_available) {
+    $stmt_available->bind_param("i", $user_id);
+    $stmt_available->execute();
+    $available_result = $stmt_available->get_result();
+    while ($event = $available_result->fetch_assoc()) {
+        $available_events[] = $event;
+    }
+    $stmt_available->close();
 }
 
 // Fetch club memberships with position and status for the logged-in student
@@ -177,7 +298,7 @@ $clubs_array = [];
         <div class="metric-card">
             <div class="metric-info">
                 <span class="metric-label">Event Attendance</span>
-                <h3 class="metric-value">85%</h3>
+                <h3 class="metric-value"><?php echo $attendance_rate; ?>%</h3>
             </div>
             <div class="metric-icon-box blue-icon">📉</div>
         </div>
@@ -230,20 +351,27 @@ $clubs_array = [];
 
         <div class="event-sidebar">
             <div class="progress-container">
-                <h3 class="card-title">My Attendance Goal</h3>
-                <span class="metric-label">8 out of 10 events</span>
-                <div class="progress-bar-bg"><div class="progress-fill" style="width: 80%;"></div></div>
-                
-                <h3 class="card-title" style="margin-top:20px;">Available Events</h3>
+                <h3 class="card-title">Available Events</h3>
                 <div class="event-list">
-                    <div class="event-item">
-                        <div class="event-date"><span>OCT</span><strong>24</strong></div>
-                        <div class="event-info">
-                            <div style="font-weight:bold;">Hackathon 2026</div>
-                            <small>8:00 AM - Library</small>
-                        </div>
-                        <button class="action-btn edit">Register</button>
-                    </div>
+                    <?php if (!empty($available_events)): ?>
+                        <?php foreach ($available_events as $event): ?>
+                            <div class="event-item">
+                                <div class="event-date">
+                                    <span><?php echo strtoupper(date('M', strtotime($event['event_date']))); ?></span>
+                                    <strong><?php echo date('d', strtotime($event['event_date'])); ?></strong>
+                                </div>
+                                <div class="event-info">
+                                    <div style="font-weight:bold;"><?php echo htmlspecialchars($event['event_title']); ?></div>
+                                    <small><?php echo date('h:i A', strtotime($event['event_time'])); ?> - <?php echo htmlspecialchars($event['venue']); ?></small>
+                                    <br><small><?php echo htmlspecialchars($event['club_name']); ?></small>
+                                    <br><small><?php echo (int) $event['registered_count']; ?>/<?php echo (int) $event['max_participant']; ?> registered</small>
+                                </div>
+                                <button class="action-btn edit" onclick="window.location.href='event_registration_form.php?id=<?php echo (int) $event['event_id']; ?>'">Register</button>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <p class="text-muted small mb-0">No available events right now.</p>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
@@ -381,11 +509,13 @@ foreach ($clubs_array as $club) {
                     </div>
                 </div>
 
-                <div class="modal-footer bg-light p-3">
+                                <div class="modal-footer bg-light p-3">
                     <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Close Window</button>
-                    <button type="button" class="btn btn-success fw-bold px-4" disabled style="cursor: not-allowed;">
-                        ✓ Registered Member
-                    </button>
+                    <form method="POST" action="studentDashboard.php" onsubmit="return confirm('Quit <?php echo htmlspecialchars($club['club_name'], ENT_QUOTES); ?>? This will remove your membership and committee role for this club if one exists.');">
+                        <input type="hidden" name="action" value="quit_club">
+                        <input type="hidden" name="club_id" value="<?php echo (int) $club_id; ?>">
+                        <button type="submit" class="btn btn-danger fw-bold px-4">Quit Club</button>
+                    </form>
                 </div>
 
             </div>
@@ -403,3 +533,4 @@ $conn->close();
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+

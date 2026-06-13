@@ -2,6 +2,8 @@
 // 1. SESSION INITIALIZATION
 session_start();
 
+include ('session.php');
+
 // 2. SESSION GUARD: Standardized to match login.php session keys
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'Admin') {
     header("Location: login.php");

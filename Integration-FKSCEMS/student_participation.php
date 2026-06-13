@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-include 'session.php';
+include ('session.php');
 
 // 2. Database Connection
 $servername = "localhost";
@@ -212,7 +212,7 @@ $summary = $summary_result->fetch_assoc();
         <!-- PROFILE -->
         <div class="student-profile">
 
-            <img src="assets/images/uploads/<?php echo h($student['profile_photo']); ?>" alt="Profile" onerror="this.onerror=null; this.src='ProfilePhoto.png';">
+            <img src="uploads/<?php echo h($student['profile_photo']); ?>" alt="Profile" onerror="this.onerror=null; this.src='ProfilePhoto.png';">
 
             <div class="student-info">
                 <h2><?php echo h($student_name); ?></h2>

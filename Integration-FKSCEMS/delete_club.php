@@ -1,4 +1,7 @@
 <?php
+session_start();
+
+include ('session.php');
 require_once 'config/db.php';
 
 $search_term = "";

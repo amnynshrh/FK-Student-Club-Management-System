@@ -1,6 +1,8 @@
 <?php
 session_start();
 
+include ('session.php');
+
 // 1. SECURITY: Only admins allowed
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'Admin') {
     header("Location: login.php");
