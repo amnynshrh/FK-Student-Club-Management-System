@@ -1,0 +1,464 @@
+:root {
+    --primary-color: #3b82f6;
+    --primary-hover: #2563eb;
+    --card-bg: #ffffff;
+    --text-color: #1e293b;
+    --border-color: #cbd5e1;
+    --danger-color: #ef4444;
+    --danger-hover: #dc2626;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f4f7f6;
+    color: var(--text-color);
+    margin: 0;
+    justify-content: center;
+}
+
+.form-container {
+    margin: auto;
+    background-color: var(--card-bg);
+    width: 100%;
+    max-width: 650px;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+h2 {
+    margin: 0 0 5px 0;
+    color: var(--text-color);
+}
+
+.subtitle {
+    margin: 0 0 15px 0;
+    font-size: 0.9rem;
+    color: #64748b;
+}
+
+hr {
+    border: 0;
+    height: 1px;
+    background-color: var(--border-color);
+    margin-bottom: 25px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 8px;
+    font-size: 0.95rem;
+}
+
+.required {
+    color: var(--danger-color);
+}
+
+input[type="text"], textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 0.95rem;
+    box-sizing: border-box;
+    transition: border-color 0.2s;
+}
+
+input:focus, textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+/* Committee Section Styling */
+.committee-section {
+    background-color: #f1f5f9;
+    padding: 20px;
+    border-radius: 6px;
+    margin-bottom: 25px;
+}
+
+.committee-section h3 {
+    margin: 0 0 5px 0;
+    font-size: 1.1rem;
+}
+
+.section-desc {
+    margin: 0 0 15px 0;
+    font-size: 0.85rem;
+    color: #64748b;
+}
+
+.committee-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+    align-items: center;
+}
+
+.committee-row input {
+    flex: 1;
+}
+
+.committee-row .member-role[readonly] {
+    background-color: #e2e8f0;
+    color: #475569;
+    cursor: not-allowed;
+}
+
+/* Buttons */
+.btn-secondary {
+    background: transparent;
+    border: 1px dashed var(--primary-color);
+    color: var(--primary-color);
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    width: 100%;
+    margin-top: 5px;
+    transition: background 0.2s;
+}
+
+.btn-secondary:hover {
+    background-color: rgba(59, 130, 246, 0.05);
+}
+
+.btn-remove {
+    background-color: transparent;
+    color: var(--danger-color);
+    border: 1px solid var(--danger-color);
+    padding: 10px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.btn-remove:hover {
+    background-color: var(--danger-color);
+    color: white;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+}
+
+.btn-submit {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-submit:hover {
+    background-color: var(--primary-hover);
+}
+
+.btn-cancel {
+    background-color: transparent;
+    color: #64748b;
+    border: 1px solid var(--border-color);
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-cancel:hover {
+    background-color: #f1f5f9;
+}
+/* Success Alert Formatting Customizations (Option B) */
+.alert-box {
+    text-align: center;
+    max-width: 400px;
+    animation: popupScale 0.3s ease-out;
+}
+
+.success-icon {
+    background-color: #dcfce7;
+    color: #16a34a;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    font-size: 1.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 15px auto;
+}
+
+.success-title {
+    color: #16a34a !important;
+    margin-bottom: 5px;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.flex-center {
+    justify-content: center !important;
+    width: 100%;
+}
+
+@keyframes popupScale {
+    from { transform: scale(0.9); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+/* Table Layout Elements for delete */
+.wide-container {
+    max-width: 800px;
+}
+
+.club-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+.club-table th, .club-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.club-table th {
+    background-color: #f1f5f9;
+    font-weight: 600;
+}
+
+.status-badge {
+    padding: 4px 8px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    border-radius: 4px;
+}
+
+.status-badge.active {
+    background-color: #dcfce7;
+    color: #15803d;
+}
+
+.btn-delete {
+    background-color: transparent;
+    color: var(--danger-color);
+    border: 1px solid var(--danger-color);
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.btn-delete:hover {
+    background-color: var(--danger-color);
+    color: white;
+}
+
+/* Modal Window Overlay Layout */
+.modal-overlay {
+    display: none; /* Hidden by default */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(3px);
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-box {
+    background-color: var(--card-bg);
+    padding: 25px;
+    border-radius: 8px;
+    width: 100%;
+    max-width: 450px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.modal-header {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #b91c1c;
+    margin-bottom: 10px;
+}
+
+.modal-body {
+    font-size: 0.95rem;
+    color: #475569;
+    line-height: 1.5;
+    margin-bottom: 20px;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.modal-footer form {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-danger-confirm {
+    background-color: var(--danger-color);
+    color: white;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-danger-confirm:hover {
+    background-color: var(--danger-hover);
+}
+:root {
+    --primary-color: #3b82f6;
+    --primary-hover: #2563eb;
+    --bg-color: #f8fafc;
+    --card-bg: #ffffff;
+    --text-color: #1e293b;
+    --border-color: #cbd5e1;
+    --danger-color: #ef4444;
+    --danger-hover: #dc2626;
+    
+    /* Connect your theme variables directly into Bootstrap's root override layers */
+    --bs-primary: var(--primary-color);
+    --bs-primary-rgb: 59, 130, 246;
+}
+
+/* --- THEME CUSTOM CARD OVERRIDES --- */
+.native-club-card {
+    background-color: var(--card-bg);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.native-club-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.card-inner-content h3 {
+    margin: 0 0 10px 0;
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--text-color);
+}
+
+.advisor-tag {
+    font-size: 0.9rem;
+    color: #64748b;
+}
+
+/* --- CUSTOM ELEMENT OVERRIDES --- */
+h2 {
+    margin: 0 0 5px 0;
+    color: var(--text-color);
+}
+
+.subtitle {
+    margin: 0 0 15px 0;
+    font-size: 0.95rem;
+    color: #64748b;
+}
+
+hr {
+    border: 0;
+    height: 1px;
+    background-color: var(--border-color);
+    opacity: 1; /* Prevents Bootstrap's transparent hr opacity filter */
+}
+
+/* --- CUSTOM TABLES --- */
+.native-data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.native-data-table th {
+    background-color: #f1f5f9 !important;
+    color: var(--text-color);
+    font-weight: 600;
+}
+
+.native-data-table th, .native-data-table td {
+    padding: 12px 15px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* --- BUTTON LAYERS (YOUR CHOSEN DESIGNS) --- */
+.btn-submit {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.btn-submit:hover {
+    background-color: var(--primary-hover);
+    color: white;
+}
+
+.btn-cancel {
+    background-color: transparent;
+    color: #64748b;
+    border: 1px solid var(--border-color);
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.btn-cancel:hover {
+    background-color: #f1f5f9;
+}
+
+/* --- DYNAMIC MODAL BOX DECORATIONS --- */
+/* Bootstrap takes over .modal-overlay positioning. We apply your custom styles safely to the inner modal card */
+.modal-content {
+    background-color: var(--card-bg);
+    border-radius: 8px !important;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.modal-main-header {
+    border-bottom: 1px solid var(--border-color);
+}
+
+.info-block h4 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 12px;
+}
+
+/* --- MISC ALERT STYLES --- */
+.no-clubs-alert {
+    background-color: #f1f5f9;
+    border: 1px solid var(--border-color);
+    padding: 20px;
+    border-radius: 6px;
+    color: #64748b;
+}
