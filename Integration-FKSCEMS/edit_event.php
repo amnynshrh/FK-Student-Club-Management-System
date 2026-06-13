@@ -75,6 +75,32 @@ function determine_event_status($date, $startTime, $endTime, $registrationOpen)
   }
   return $registrationOpen === '1' ? 'open' : 'upcoming';
 }
+function has_booking_clash($conn, $date, $startTime, $endTime, $venue, $excludeEventId = 0)
+{
+  $newStart = $date . ' ' . $startTime;
+  $newEnd = event_end_datetime($date, $startTime, $endTime)->format('Y-m-d H:i:s');
+
+  $sql = "
+    SELECT event_id
+    FROM event
+    WHERE LOWER(TRIM(venue)) = LOWER(TRIM(?))
+      AND event_status != 'cancelled'
+      AND ? < (
+        CASE
+          WHEN end_time <= event_time
+          THEN DATE_ADD(CONCAT(event_date, ' ', end_time), INTERVAL 1 DAY)
+          ELSE CONCAT(event_date, ' ', end_time)
+        END
+      )
+      AND ? > CONCAT(event_date, ' ', event_time)
+      AND event_id <> ?
+    LIMIT 1
+  ";
+  $stmt = mysqli_prepare($conn, $sql);
+  mysqli_stmt_bind_param($stmt, 'sssi', $venue, $newStart, $newEnd, $excludeEventId);
+  mysqli_stmt_execute($stmt);
+  return mysqli_num_rows(mysqli_stmt_get_result($stmt)) > 0;
+}
 logout_if_requested();
 $conn = db_connect();
 setcookie('last_event_page', basename($_SERVER['PHP_SELF']), time() + 86400, '/');
@@ -115,8 +141,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $registrationOpen = ($_POST['registration_open'] ?? '0') === '1' ? '1' : '0';
   if ($title === '' || $description === '' || $date === '' || $start === '' || $end === '' || $venue === '' || $participants === '') {
     $message = 'Please fill in all required fields.';
-  } elseif ($end === $start) {
-    $message = 'End time cannot be the same as start time.';
+  } elseif (strtotime($end) <= strtotime($start)) {
+    $message = 'End time must be after start time.';
+  } elseif (has_booking_clash($conn, $date, $start, $end, $venue, (int)$eventId)) {
+    $message = 'Booking clash detected. This venue is already booked during the selected time.';
   } else {
     $status = determine_event_status($date, $start, $end, $registrationOpen);
     $st = mysqli_prepare($conn, "UPDATE event SET event_title=?,event_description=?,event_date=?,event_time=?,end_time=?,venue=?,max_participant=?,event_status=?,registration_open=? WHERE event_id=?");
@@ -417,10 +445,10 @@ $event = ['title' => $r['event_title'], 'description' => $r['event_description']
         }
         return false;
       }
-      if (end === start) {
+      if (end <= start) {
         if (box) {
           box.classList.remove('d-none');
-          box.innerHTML = 'End time cannot be the same as start time.';
+          box.innerHTML = 'End time must be after start time.';
         }
         return false;
       }

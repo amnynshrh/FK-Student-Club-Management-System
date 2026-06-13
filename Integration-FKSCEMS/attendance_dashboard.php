@@ -180,17 +180,21 @@ if ($club_name !== "") {
 
 $statusRows = fetch_all(
     $conn,
-    "SELECT
-        CASE
-            WHEN a.attendance_id IS NULL THEN 'Not Marked'
-            ELSE CONCAT(UCASE(LEFT(a.attendance_status, 1)), SUBSTRING(a.attendance_status, 2))
-        END AS attendance_status,
-        COUNT(DISTINCT er.registration_id) AS total
-     FROM event e
-     INNER JOIN club c ON e.club_id = c.club_id
-     INNER JOIN eventregistration er ON e.event_id = er.event_id AND er.registration_status = 'registered'
-     LEFT JOIN attendance a ON er.registration_id = a.registration_id
-     $where_sql
+    "SELECT attendance_status, COUNT(DISTINCT registration_id) AS total
+     FROM (
+        SELECT
+            er.registration_id,
+            CASE
+                WHEN MAX(a.attendance_id) IS NULL THEN 'Not Marked'
+                ELSE CONCAT(UCASE(LEFT(MAX(a.attendance_status), 1)), SUBSTRING(MAX(a.attendance_status), 2))
+            END AS attendance_status
+        FROM event e
+        INNER JOIN club c ON e.club_id = c.club_id
+        INNER JOIN eventregistration er ON e.event_id = er.event_id AND er.registration_status = 'registered'
+        LEFT JOIN attendance a ON er.registration_id = a.registration_id
+        $where_sql
+        GROUP BY er.registration_id
+     ) attendance_summary
      GROUP BY attendance_status
      ORDER BY total DESC",
     $types,

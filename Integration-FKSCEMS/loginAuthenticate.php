@@ -34,8 +34,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         // Convert the database value to lowercase to protect against casing conflicts
         $db_role = strtolower($user['role']); 
 
-        // Verify the plain text password against the securely encrypted database hash
-        if (password_verify($input_pass, $user['password'])) {
+        // Accept hashed passwords from registration and plain seed passwords from the SQL file.
+        $password_matches = password_verify($input_pass, $user['password']) || hash_equals($user['password'], $input_pass);
+        if ($password_matches) {
         // if ($input_pass = $input_pass) {
             
             // 3. ROLE VALIDATION LOGIC (FIXED CASE MATCHING)

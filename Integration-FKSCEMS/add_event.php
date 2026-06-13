@@ -159,8 +159,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
   if ($event['title'] === '' || $event['description'] === '' || $event['date'] === '' || $event['startTime'] === '' || $event['endTime'] === '' || $event['venue'] === '' || $event['participants'] === '') {
     $message = 'Please fill in all required fields.';
-  } elseif ($event['endTime'] === $event['startTime']) {
-    $message = 'End time cannot be the same as start time.';
+  } elseif (strtotime($event['endTime']) <= strtotime($event['startTime'])) {
+    $message = 'End time must be after start time.';
   } elseif (has_booking_clash($conn, $event['date'], $event['startTime'], $event['endTime'], $event['venue'])) {
     $message = 'Booking clash detected. This venue is already booked during the selected time.';
   } elseif (!$committeeId || !$clubId) {
@@ -427,10 +427,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         return false;
       }
-      if (end === start) {
+      if (end <= start) {
         if (box) {
           box.classList.remove('d-none');
-          box.innerHTML = 'End time cannot be the same as start time.';
+          box.innerHTML = 'End time must be after start time.';
         }
         return false;
       }
